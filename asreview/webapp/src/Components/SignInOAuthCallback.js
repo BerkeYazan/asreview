@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { Box } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
+import React from 'react';
+
 
 const queryToObject = (query) => {
   const parameters = new URLSearchParams(query);
