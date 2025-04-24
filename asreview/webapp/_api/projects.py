@@ -1153,8 +1153,10 @@ def api_get_progress_info(project):  # noqa: F401
 @bp.route("/projects/<project_id>/stopping", methods=["GET"])
 @login_required
 @project_authorization
-def api_get_stopper(project):  # noqa: F401
+def api_get_stopper(project):
     """Get stopper of a project"""
+
+    stopping_type = request.args.get("type", "consecutive")
 
     fp_al_cycle = Path(
         project.project_path,
@@ -1164,8 +1166,19 @@ def api_get_stopper(project):  # noqa: F401
     )
 
     with open(fp_al_cycle, "r") as f:
-        cycle = ActiveLearningCycleData(**json.load(f).get("current_value", {}))
-
+        cycle_data = json.load(f)
+        
+    # Check if we have a saved configuration for this stopping type
+    if "stoppers" in cycle_data.get("current_value", {}) and stopping_type in cycle_data["current_value"]["stoppers"]:
+        stopper_config = cycle_data["current_value"]["stoppers"][stopping_type]
+        stopper_name = stopper_config["name"]
+        stopper_params = stopper_config["params"]
+    else:
+        # Fall back to default configuration
+        stopper_name = NConsecutiveIrrelevant.name
+        stopper_params = {"n": 50}
+    
+    cycle = ActiveLearningCycleData(**cycle_data.get("current_value", {}))
     stopper = ActiveLearningCycle.from_meta(cycle).stopper
 
     if stopper is None:
@@ -1199,19 +1212,33 @@ def api_get_stopper(project):  # noqa: F401
 @bp.route("/projects/<project_id>/stopping", methods=["POST", "PUT"])
 @login_required
 @project_authorization
-def api_mutate_stopper(project):  # noqa: F401
+def api_mutate_stopper(project):
     """Mutate stopper of a project"""
 
     fp_al_cycle = Path(
         project.project_path,
         "reviews",
         project.reviews[0]["id"],
-        "settings_metadata.json",
+        "settings_metadata.json"
     )
 
     with open(fp_al_cycle, "r") as f:
         data = json.load(f)
-
+    
+    # Get the stopping type from the request
+    stopping_type = request.form.get("type", "consecutive")
+    
+    # Initialize the stopper configuration if it doesn't exist
+    if "stoppers" not in data["current_value"]:
+        data["current_value"]["stoppers"] = {}
+    
+    # Save the threshold for the specific stopping type
+    data["current_value"]["stoppers"][stopping_type] = {
+        "name": NConsecutiveIrrelevant.name,
+        "params": {"n": request.form.get("n", 50, type=int)}
+    }
+    
+    # Set the active stopper based on the type
     data["current_value"]["stopper"] = NConsecutiveIrrelevant.name
     data["current_value"]["stopper_param"] = {"n": request.form.get("n", 50, type=int)}
 

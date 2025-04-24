@@ -546,12 +546,16 @@ class ProjectAPI {
     });
   }
 
-  static fetchStopping({ queryKey }) {
+  static fetchStopping({ queryKey, params = {} }) {
     const { project_id } = queryKey[1];
+    const type = params.type || "consecutive";
     const url = api_url + `projects/${project_id}/stopping`;
     return new Promise((resolve, reject) => {
       axios
-        .get(url, { withCredentials: true })
+        .get(url, {
+          params: { type: type },
+          withCredentials: true,
+        })
         .then((result) => {
           resolve(result["data"]);
         })
@@ -564,6 +568,9 @@ class ProjectAPI {
   static mutateStopping(variables) {
     let body = new FormData();
     body.set("n", variables.n);
+    if (variables.type) {
+      body.set("type", variables.type);
+    }
 
     const url = api_url + `projects/${variables.project_id}/stopping`;
     return new Promise((resolve, reject) => {

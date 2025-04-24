@@ -1,0 +1,853 @@
+import React from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import { DoneAll } from "@mui/icons-material";
+import { StyledLightBulb } from "StyledComponents/StyledLightBulb";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Grid2 as Grid,
+  IconButton,
+  Paper,
+  Popover,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+  LinearProgress,
+  Divider,
+  Chip,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { ProjectAPI } from "api";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import StoppingReachedDialog from "../ReviewComponents/StoppingReachedDialog";
+
+const StoppingSuggestion = ({ project_id }) => {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+
+  // Method state variables
+  const [activeMethod, setActiveMethod] = React.useState("consecutive");
+
+  // Thresholds for each method
+  const [consecutiveThreshold, setConsecutiveThreshold] = React.useState(null);
+  const [totalLabeledThreshold, setTotalLabeledThreshold] =
+    React.useState(null);
+  const [relevantFoundThreshold, setRelevantFoundThreshold] =
+    React.useState(null);
+
+  // Custom threshold input value
+  const [customThreshold, setCustomThreshold] = React.useState("");
+
+  // Threshold entry mode (custom or percentage)
+  const [thresholdMode, setThresholdMode] = React.useState("percentage");
+
+  // Threshold set flags for each method
+  const [isConsecutiveThresholdSet, setIsConsecutiveThresholdSet] =
+    React.useState(null);
+  const [isTotalLabeledThresholdSet, setIsTotalLabeledThresholdSet] =
+    React.useState(null);
+  const [isRelevantFoundThresholdSet, setIsRelevantFoundThresholdSet] =
+    React.useState(null);
+
+  // Add these state variables to track the last saved threshold for each method
+  const [lastSavedConsecutiveThreshold, setLastSavedConsecutiveThreshold] =
+    React.useState(null);
+  const [lastSavedTotalLabeledThreshold, setLastSavedTotalLabeledThreshold] =
+    React.useState(null);
+  const [lastSavedRelevantFoundThreshold, setLastSavedRelevantFoundThreshold] =
+    React.useState(null);
+
+  // UI state
+  const [anchorElEdit, setAnchorElEdit] = React.useState(null);
+  const [anchorElInfo, setAnchorElInfo] = React.useState(null);
+  const [progress, setProgress] = React.useState(0);
+  const [showStoppingDialog, setShowStoppingDialog] = React.useState(false);
+
+  const { data: projectData } = useQuery(
+    ["fetchData", { project_id }],
+    ProjectAPI.fetchData,
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  const { data: progressData } = useQuery(
+    ["fetchProgress", { project_id }],
+    ProjectAPI.fetchProgress,
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Query for consecutive method (original stopping method)
+  const { data: consecutiveData, isLoading: isConsecutiveLoading } = useQuery(
+    ["fetchStopping", { project_id: project_id }],
+    ProjectAPI.fetchStopping,
+    {
+      refetchOnWindowFocus: false,
+      onSuccess: (data) => {
+        const hasThreshold = Boolean(data?.params?.n);
+        setIsConsecutiveThresholdSet(hasThreshold);
+
+        if (hasThreshold) {
+          // Only update if we don't have a locally saved value or if this is the initial load
+          if (lastSavedConsecutiveThreshold === null) {
+            const parsedThreshold = parseInt(data.params.n);
+            setConsecutiveThreshold(parsedThreshold);
+            setLastSavedConsecutiveThreshold(parsedThreshold);
+          } else {
+            // Otherwise use our locally saved value
+            setConsecutiveThreshold(lastSavedConsecutiveThreshold);
+          }
+        }
+      },
+    },
+  );
+
+  // Query for total labeled method
+  const { data: totalLabeledData, isLoading: isTotalLabeledLoading } = useQuery(
+    ["fetchTotalLabeledStopping", { project_id: project_id }],
+    ({ queryKey }) =>
+      ProjectAPI.fetchStopping({
+        queryKey: queryKey,
+        params: { type: "total_labeled" },
+      }),
+    {
+      refetchOnWindowFocus: false,
+      onSuccess: (data) => {
+        const hasThreshold = Boolean(data?.params?.n);
+        setIsTotalLabeledThresholdSet(hasThreshold);
+
+        if (hasThreshold) {
+          if (lastSavedTotalLabeledThreshold === null) {
+            const parsedThreshold = parseInt(data.params.n);
+            setTotalLabeledThreshold(parsedThreshold);
+            setLastSavedTotalLabeledThreshold(parsedThreshold);
+          } else {
+            setTotalLabeledThreshold(lastSavedTotalLabeledThreshold);
+          }
+        }
+      },
+    },
+  );
+
+  // Query for relevant found method
+  const { data: relevantFoundData, isLoading: isRelevantFoundLoading } =
+    useQuery(
+      ["fetchRelevantFoundStopping", { project_id: project_id }],
+      ({ queryKey }) =>
+        ProjectAPI.fetchStopping({
+          queryKey: queryKey,
+          params: { type: "relevant_found" },
+        }),
+      {
+        refetchOnWindowFocus: false,
+        onSuccess: (data) => {
+          const hasThreshold = Boolean(data?.params?.n);
+          setIsRelevantFoundThresholdSet(hasThreshold);
+
+          if (hasThreshold) {
+            if (lastSavedRelevantFoundThreshold === null) {
+              const parsedThreshold = parseInt(data.params.n);
+              setRelevantFoundThreshold(parsedThreshold);
+              setLastSavedRelevantFoundThreshold(parsedThreshold);
+            } else {
+              setRelevantFoundThreshold(lastSavedRelevantFoundThreshold);
+            }
+          }
+        },
+      },
+    );
+
+  // Update stopping rule mutation
+  const { mutate: updateStoppingRule } = useMutation(
+    ProjectAPI.mutateStopping,
+    {
+      onSuccess: (data) => {
+        const thresholdValue = parseInt(customThreshold);
+
+        // Only update the state for the specific method
+        if (activeMethod === "consecutive") {
+          setIsConsecutiveThresholdSet(true);
+          setConsecutiveThreshold(thresholdValue);
+          setLastSavedConsecutiveThreshold(thresholdValue);
+        } else if (activeMethod === "total_labeled") {
+          setIsTotalLabeledThresholdSet(true);
+          setTotalLabeledThreshold(thresholdValue);
+          setLastSavedTotalLabeledThreshold(thresholdValue);
+        } else if (activeMethod === "relevant_found") {
+          setIsRelevantFoundThresholdSet(true);
+          setRelevantFoundThreshold(thresholdValue);
+          setLastSavedRelevantFoundThreshold(thresholdValue);
+        }
+
+        // Don't invalidate any queries - rely on our local cache instead
+        handleCloseEdit();
+      },
+    },
+  );
+
+  // Determine current values based on active method
+  const getCurrentThreshold = () => {
+    switch (activeMethod) {
+      case "consecutive":
+        return consecutiveThreshold;
+      case "total_labeled":
+        return totalLabeledThreshold;
+      case "relevant_found":
+        return relevantFoundThreshold;
+      default:
+        return consecutiveThreshold;
+    }
+  };
+
+  const isCurrentThresholdSet = () => {
+    switch (activeMethod) {
+      case "consecutive":
+        return isConsecutiveThresholdSet;
+      case "total_labeled":
+        return isTotalLabeledThresholdSet;
+      case "relevant_found":
+        return isRelevantFoundThresholdSet;
+      default:
+        return isConsecutiveThresholdSet;
+    }
+  };
+
+  const getCurrentValue = () => {
+    switch (activeMethod) {
+      case "consecutive":
+        return consecutiveData?.value || 0;
+      case "total_labeled":
+        return (
+          progressData?.n_included_no_priors +
+            progressData?.n_excluded_no_priors || 0
+        );
+      case "relevant_found":
+        return progressData?.n_included_no_priors || 0;
+      default:
+        return 0;
+    }
+  };
+
+  const getCurrentProgress = () => {
+    const currentThreshold = getCurrentThreshold();
+    const currentValue = getCurrentValue();
+
+    if (!currentThreshold) return 0;
+    return Math.min((currentValue / currentThreshold) * 100, 100);
+  };
+
+  // Get the appropriate progress bar color based on active method
+  const getProgressBarColor = () => {
+    switch (activeMethod) {
+      case "consecutive":
+        return theme.palette.grey[600]; // Grey for consecutive
+      case "total_labeled":
+        return theme.palette.primary.main; // Primary color for total labeled
+      case "relevant_found":
+        return theme.palette.tertiary?.dark || "#C8B476"; // Relevant color for relevant found
+      default:
+        return theme.palette.grey[600];
+    }
+  };
+
+  // Set up animation for progress
+  React.useEffect(() => {
+    const targetValue = getCurrentProgress();
+    let start;
+
+    const animate = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = timestamp - start;
+      const currentValue = Math.min(
+        (progress / 300) * targetValue,
+        targetValue,
+      );
+
+      setProgress(currentValue);
+
+      if (currentValue < targetValue) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [
+    activeMethod,
+    consecutiveData,
+    totalLabeledData,
+    relevantFoundData,
+    progressData,
+  ]);
+
+  const handleCloseEdit = () => {
+    setAnchorElEdit(null);
+    setThresholdMode("percentage"); // Reset mode when closing
+    setCustomThreshold("");
+  };
+
+  const openEdit = Boolean(anchorElEdit);
+
+  const getMethodDescription = () => {
+    switch (activeMethod) {
+      case "consecutive":
+        return "Consecutive not relevant records";
+      case "relevant_found":
+        return "Total relevant records";
+      case "total_labeled":
+        return "Total records";
+      default:
+        return "Stopping criteria";
+    }
+  };
+
+  const handleHelpPopoverOpen = (event) => {
+    setAnchorElInfo(event.currentTarget);
+  };
+
+  const handleHelpPopoverClose = () => {
+    setAnchorElInfo(null);
+  };
+
+  const handleThresholdModeChange = (mode) => {
+    setThresholdMode(mode);
+    setCustomThreshold(""); // Clear custom threshold when switching modes
+  };
+
+  const StaticProgressBar = ({ value }) => {
+    return (
+      <Box
+        sx={{ position: "relative", width: 60, transform: "rotate(270deg)" }}
+      >
+        <LinearProgress
+          variant="determinate"
+          value={value}
+          sx={{
+            height: 60,
+            minWidth: 60,
+            borderRadius: 50,
+            backgroundColor: theme.palette.grey[400],
+            "& .MuiLinearProgress-bar": {
+              backgroundColor: theme.palette.grey[600],
+              borderRadius: 50,
+            },
+          }}
+        />
+        {value === 100 && (
+          <IconButton
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%) rotate(90deg)",
+              color: theme.palette.grey[400],
+            }}
+          >
+            <DoneAll sx={{ fontSize: 30 }} />
+          </IconButton>
+        )}
+      </Box>
+    );
+  };
+
+  const handleStoppingCircleClick = () => {
+    if (progress >= 100) {
+      setShowStoppingDialog(true);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setShowStoppingDialog(false);
+  };
+
+  const handleSaveThreshold = () => {
+    if (customThreshold !== null && customThreshold !== "") {
+      updateStoppingRule({
+        project_id: project_id,
+        n: customThreshold,
+        type: activeMethod,
+      });
+    }
+  };
+
+  const handleMethodChange = (method) => {
+    setActiveMethod(method);
+    setCustomThreshold("");
+  };
+
+  const calculatePercentageValue = (percent) => {
+    // Always use the same percentage of total records for all methods
+    return Math.round(projectData?.n_rows * (percent / 100));
+  };
+
+  const isLoading =
+    isConsecutiveLoading ||
+    isTotalLabeledLoading ||
+    isRelevantFoundLoading ||
+    isConsecutiveThresholdSet === null ||
+    isTotalLabeledThresholdSet === null ||
+    isRelevantFoundThresholdSet === null;
+
+  return (
+    <Card sx={{ position: "relative", bgcolor: "transparent" }}>
+      <CardContent sx={{ mt: 4 }}>
+        <Box sx={{ position: "absolute", top: 8, right: 8 }}>
+          <IconButton size="small" onClick={handleHelpPopoverOpen}>
+            <StyledLightBulb fontSize="small" />
+          </IconButton>
+        </Box>
+
+        {isLoading ? (
+          <Grid container spacing={2} columns={2}>
+            <Grid size={1}>
+              <Stack spacing={2} pt={4}>
+                <Skeleton
+                  variant="rectangular"
+                  height={30}
+                  sx={{ borderRadius: 3 }}
+                />
+                <Skeleton
+                  variant="rectangular"
+                  height={30}
+                  sx={{ borderRadius: 3 }}
+                />
+              </Stack>
+            </Grid>
+            <Grid
+              size={1}
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <Box
+                width={160}
+                height={160}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Skeleton
+                  variant="circular"
+                  width={160}
+                  height={160}
+                  sx={{ borderRadius: "50%" }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        ) : (
+          <Grid container spacing={2} columns={2}>
+            <Grid size={1}>
+              {/* Method chips with text, not icons */}
+              <Stack spacing={2}>
+                <Stack direction="row" spacing={1}>
+                  <Chip
+                    label="Consecutive"
+                    onClick={() => handleMethodChange("consecutive")}
+                    variant={
+                      activeMethod === "consecutive" ? "filled" : "outlined"
+                    }
+                    color="primary"
+                    size="small"
+                  />
+                  <Chip
+                    label="Relevant"
+                    onClick={() => handleMethodChange("relevant_found")}
+                    variant={
+                      activeMethod === "relevant_found" ? "filled" : "outlined"
+                    }
+                    color="primary"
+                    size="small"
+                  />
+                  <Chip
+                    label="Total"
+                    onClick={() => handleMethodChange("total_labeled")}
+                    variant={
+                      activeMethod === "total_labeled" ? "filled" : "outlined"
+                    }
+                    color="primary"
+                    size="small"
+                  />
+                </Stack>
+
+                {/* Description text - no duplication */}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    ml: 1,
+                    fontSize: "0.75rem",
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {getMethodDescription()}
+                </Typography>
+
+                {/* Threshold section */}
+                {!isCurrentThresholdSet() ? (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={(event) => {
+                      setAnchorElEdit(event.currentTarget);
+                    }}
+                    startIcon={<EditIcon />}
+                    sx={{
+                      alignSelf: "flex-start",
+                      mt: 1,
+                    }}
+                    color="primary"
+                  >
+                    Set Threshold
+                  </Button>
+                ) : (
+                  <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                    <Typography
+                      variant="h5"
+                      fontWeight="medium"
+                      color="text.primary"
+                      sx={{ mr: 1 }}
+                    >
+                      {getCurrentValue()}/{getCurrentThreshold()}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={(event) => {
+                        setAnchorElEdit(event.currentTarget);
+                      }}
+                      color="primary"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Box>
+                )}
+              </Stack>
+            </Grid>
+            <Grid
+              size={1}
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+            >
+              {!isCurrentThresholdSet() ? (
+                <Box
+                  sx={{
+                    width: 160,
+                    height: 160,
+                    borderRadius: "50%",
+                    backgroundColor: theme.palette.grey[300],
+                  }}
+                />
+              ) : (
+                <Box
+                  width={160}
+                  sx={{
+                    transform: "rotate(270deg)",
+                    position: "relative",
+                    cursor: progress >= 100 ? "pointer" : "default",
+                  }}
+                  onClick={handleStoppingCircleClick}
+                >
+                  <LinearProgress
+                    variant="determinate"
+                    value={progress}
+                    sx={{
+                      height: 160,
+                      minWidth: 160,
+                      borderRadius: 50,
+                      backgroundColor: theme.palette.grey[300],
+                      transition: "value 1s linear",
+                      "& .MuiLinearProgress-bar": {
+                        backgroundColor: getProgressBarColor(),
+                        borderRadius: 50,
+                      },
+                    }}
+                  />
+                  {progress >= 100 && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%) rotate(90deg)",
+                        color: theme.palette.grey[300],
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <DoneAll sx={{ fontSize: 50 }} />
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Grid>
+          </Grid>
+        )}
+      </CardContent>
+      <Popover
+        open={Boolean(anchorElInfo)}
+        anchorEl={anchorElInfo}
+        onClose={handleHelpPopoverClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxWidth: 320,
+          },
+        }}
+      >
+        <Box sx={{ p: 2.5 }}>
+          <Stack spacing={2.5}>
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                Stopping Suggestion
+              </Typography>
+              <Typography variant="body2" sx={{ textAlign: "justify", mb: 2 }}>
+                This visualization shows your progress toward your stopping
+                goal. You can set different stopping thresholds based on your
+                preferred method:
+              </Typography>
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="body2" sx={{ textAlign: "justify" }}>
+                    <strong>Consecutive:</strong> Stops after finding a specific
+                    number of non-relevant records in a row. This method is
+                    effective when relevant records become increasingly rare.
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ textAlign: "justify" }}>
+                    <strong>Relevant:</strong> Stops after finding a specific
+                    number of total relevant records. This is useful when you
+                    have a target number of relevant records to collect.
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ textAlign: "justify" }}>
+                    <strong>Total:</strong> Stops after labeling a specific
+                    number of total records (both relevant and non-relevant).
+                    This works well for fixed-resource projects.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+            <Divider />
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                Setting Thresholds
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  You can set thresholds in two ways:
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Custom:</strong> Set your own custom value directly.
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Percentage:</strong> Choose a percentage of the total
+                  records in your dataset.
+                </Typography>
+              </Box>
+            </Box>
+            <Divider />
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                Progress Visualization
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                The circle fills up as you approach your threshold. Once
+                complete, a checkmark appears indicating your stopping rule has
+                been reached.
+              </Typography>
+
+              {/* Circle visualization example */}
+              <Box
+                sx={{ display: "flex", justifyContent: "space-around", mb: 1 }}
+              >
+                <Box display="flex" flexDirection="column" alignItems="center">
+                  <StaticProgressBar value={0} />
+                  <Typography variant="caption" sx={{ mt: 1 }}>
+                    0%
+                  </Typography>
+                </Box>
+                <Box display="flex" flexDirection="column" alignItems="center">
+                  <StaticProgressBar value={25} />
+                  <Typography variant="caption" sx={{ mt: 1 }}>
+                    25%
+                  </Typography>
+                </Box>
+                <Box display="flex" flexDirection="column" alignItems="center">
+                  <StaticProgressBar value={50} />
+                  <Typography variant="caption" sx={{ mt: 1 }}>
+                    50%
+                  </Typography>
+                </Box>
+                <Box display="flex" flexDirection="column" alignItems="center">
+                  <StaticProgressBar value={100} />
+                  <Typography variant="caption" sx={{ mt: 1 }}>
+                    100%
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Button
+              href="https://asreview.readthedocs.io/en/latest/progress.html#analytics"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="text"
+              size="small"
+              sx={{ textTransform: "none", p: 0 }}
+            >
+              Learn more →
+            </Button>
+          </Stack>
+        </Box>
+      </Popover>
+      <Popover
+        id="threshold-popover"
+        open={openEdit}
+        anchorEl={anchorElEdit}
+        onClose={handleCloseEdit}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            width: 320,
+            boxShadow: (theme) => theme.shadows[3],
+          },
+        }}
+      >
+        <Box sx={{ p: 2.5 }}>
+          <Stack spacing={2}>
+            <Typography variant="subtitle1" fontWeight="medium">
+              Set Threshold
+            </Typography>
+
+            {/* Mode selection chips - smaller style, custom first */}
+            <Stack direction="row" spacing={1}>
+              <Chip
+                label="Custom"
+                onClick={() => handleThresholdModeChange("custom")}
+                color="primary"
+                variant={thresholdMode === "custom" ? "filled" : "outlined"}
+                size="small"
+              />
+              <Chip
+                label="Percentage"
+                onClick={() => handleThresholdModeChange("percentage")}
+                color="primary"
+                variant={thresholdMode === "percentage" ? "filled" : "outlined"}
+                size="small"
+              />
+            </Stack>
+
+            {/* Description text based on selected mode */}
+            <Typography variant="body2" color="text.secondary">
+              {thresholdMode === "custom"
+                ? "Set your own custom value"
+                : "Choose a percentage of the total records"}
+            </Typography>
+
+            {/* Container with fixed height to ensure uniform display */}
+            <Box
+              sx={{
+                width: "100%",
+                minHeight: 80,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {thresholdMode === "custom" ? (
+                <TextField
+                  type="number"
+                  placeholder="Enter value"
+                  value={customThreshold}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value) && value >= 0) {
+                      setCustomThreshold(value);
+                    } else if (e.target.value === "") {
+                      setCustomThreshold("");
+                    }
+                  }}
+                  fullWidth
+                  size="medium"
+                />
+              ) : (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="space-between"
+                  sx={{ width: "100%" }}
+                >
+                  {[1, 2, 5, 10].map((percent) => {
+                    const value = calculatePercentageValue(percent);
+
+                    return (
+                      <Box
+                        key={percent}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          width: "22%",
+                        }}
+                      >
+                        <Button
+                          variant={
+                            customThreshold === value.toString()
+                              ? "contained"
+                              : "outlined"
+                          }
+                          fullWidth
+                          size="small"
+                          onClick={() => {
+                            setCustomThreshold(value);
+                          }}
+                          color="primary"
+                        >
+                          {`${percent}%`}
+                        </Button>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {value}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Box>
+
+            <Button
+              variant="contained"
+              onClick={handleSaveThreshold}
+              fullWidth
+              color="primary"
+              disabled={!customThreshold}
+            >
+              Save
+            </Button>
+          </Stack>
+        </Box>
+      </Popover>
+      <StoppingReachedDialog
+        open={showStoppingDialog}
+        onClose={handleCloseDialog}
+        project_id={project_id}
+      />
+    </Card>
+  );
+};
+
+export default StoppingSuggestion;
