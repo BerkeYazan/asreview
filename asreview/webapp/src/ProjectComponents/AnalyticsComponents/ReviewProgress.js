@@ -34,6 +34,7 @@ export default function ReviewProgress({ project_id }) {
 
   const progressQuery = useQuery(
     ["fetchProgress", { project_id }],
+    ["fetchProgress", { project_id }],
     ({ queryKey }) =>
       ProjectAPI.fetchProgress({
         queryKey,
