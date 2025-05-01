@@ -210,7 +210,7 @@ const SetupDialog = ({ project_id, mode, open, onClose }) => {
       <Snackbar
         anchorOrigin={{
           vertical: "bottom",
-          horizontal: "center",
+          horizontal: "right",
         }}
         open={feedbackBar !== null}
         autoHideDuration={5000}

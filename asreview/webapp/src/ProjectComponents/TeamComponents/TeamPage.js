@@ -186,6 +186,10 @@ const TeamPage = () => {
       )}
 
       <Snackbar
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
         open={snackbar.show}
         autoHideDuration={3000}
         onClose={() => {

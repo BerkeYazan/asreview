@@ -253,7 +253,7 @@ const Upload = ({ mode }) => {
       <Snackbar
         anchorOrigin={{
           vertical: "bottom",
-          horizontal: "center",
+          horizontal: "right",
         }}
         open={snackbarMessage !== null}
         autoHideDuration={5000}
