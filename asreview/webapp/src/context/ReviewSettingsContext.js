@@ -4,6 +4,7 @@ const storageNames = {
   fontSize: "fontSize",
   modelLogLevel: "modelLogLevel",
   orientation: "orientation",
+  focusMode: "focusMode",
 };
 
 const orientationOptions = ["portrait", "landscape"];
@@ -33,10 +34,15 @@ const initialReviewSettings = () => {
     ? window.localStorage.getItem(storageNames.orientation)
     : "portrait";
 
+  // Read focusMode from localStorage (default: false)
+  let localFocusMode =
+    window.localStorage.getItem(storageNames.focusMode) === "true";
+
   return {
     [storageNames.fontSize]: localFontSize,
     [storageNames.modelLogLevel]: localModelLogLevel,
     [storageNames.orientation]: orientation,
+    [storageNames.focusMode]: localFocusMode,
   };
 };
 
@@ -79,6 +85,14 @@ function ReviewSettingsReducer(reviewSettings, action) {
     case storageNames.orientation: {
       window.localStorage.setItem(storageNames.orientation, action.orientation);
       return { ...reviewSettings, orientation: action.orientation };
+    }
+
+    // Add a case for the focusMode action
+    case storageNames.focusMode: {
+      const newFocusMode = !!action.focusMode; // ensure boolean
+      window.localStorage.setItem(storageNames.focusMode, newFocusMode);
+      document.body.classList.toggle("focus-mode-active", newFocusMode);
+      return { ...reviewSettings, focusMode: newFocusMode };
     }
 
     // Add a default case that throws an error

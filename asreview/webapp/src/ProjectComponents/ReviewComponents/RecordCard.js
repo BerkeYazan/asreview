@@ -172,6 +172,8 @@ const RecordCard = ({
   transitionSpeed = { enter: 500, exit: 100 },
   landscape = false,
   changeDecision = true,
+  onToggleElasGame,
+  showControls = false,
 }) => {
   const [open, setOpen] = React.useState(true);
 
@@ -182,6 +184,8 @@ const RecordCard = ({
         record={record}
         modelLogLevel={modelLogLevel}
         sx={{ mb: 3 }}
+        onToggleElasGame={onToggleElasGame}
+        showControls={showControls}
       />
       <Card
         elevation={showBorder ? 4 : 0}

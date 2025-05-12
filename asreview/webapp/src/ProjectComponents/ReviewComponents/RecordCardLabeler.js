@@ -38,7 +38,7 @@ import { ProjectAPI } from "api";
 import { useToggle } from "hooks/useToggle";
 import TimeAgo from "javascript-time-ago";
 
-import { DeleteOutline, LabelOutlined } from "@mui/icons-material";
+import { DeleteOutline, Label } from "@mui/icons-material";
 import en from "javascript-time-ago/locale/en";
 
 TimeAgo.addLocale(en);
@@ -264,64 +264,27 @@ const RecordCardLabeler = ({
         )}
       </Box>
       <Box>
-        {(note !== null || labelFromDataset !== null) && (
+        {note !== null && (
           <>
             <Divider />
             <CardContent>
-              {note && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    mb: 2,
-                    bgcolor: "background.default",
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <NoteAltOutlinedIcon />
-                    <Typography variant="subtitle1">Note</Typography>
-                  </Stack>
-                  <Typography sx={{ mt: 1 }}>{note}</Typography>
-                </Paper>
-              )}
-              {labelFromDataset === 0 && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    bgcolor: "background.default",
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <LabelOutlined />
-                    <Typography variant="subtitle1">Not relevant</Typography>
-                  </Stack>
-                  <Typography sx={{ mt: 1 }}>
-                    This record is labeled as not relevant in the dataset
-                  </Typography>
-                </Paper>
-              )}
-              {labelFromDataset === 1 && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    bgcolor: "background.default",
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <LabelOutlined />
-                    <Typography variant="subtitle1">Relevant</Typography>
-                  </Stack>
-                  <Typography sx={{ mt: 1 }}>
-                    This record is labeled as relevant in the dataset
-                  </Typography>
-                </Paper>
-              )}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  bgcolor: "background.default",
+                }}
+              >
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <NoteAltOutlinedIcon />
+                  <Typography variant="subtitle1">Note</Typography>
+                </Stack>
+                <Typography sx={{ mt: 1 }}>{note}</Typography>
+              </Paper>
             </CardContent>
           </>
         )}
-
         {isError && (
           <CardContent>
             <Alert severity="error">
@@ -410,27 +373,90 @@ const RecordCardLabeler = ({
           )}
           <Box sx={{ flexGrow: 1 }} />
 
-          {editState && showNotes && (
-            <>
-              <Tooltip
-                title="Add note (keyboard shortcut: N)"
-                enterDelay={2000}
-                leaveDelay={200}
-                placement="bottom"
-              >
-                <IconButton
-                  onClick={toggleShowNotesDialog}
-                  aria-label="add note"
-                  disabled={isLoading || isSuccess}
-                  sx={(theme) => ({
-                    // color: theme.palette.getContrastText(
-                    //   theme.palette.secondary.dark,
-                    // ),
-                  })}
+          {landscape ? (
+            <Stack
+              direction="column"
+              spacing={0.5}
+              sx={{ alignItems: "center" }}
+            >
+              {labelFromDataset !== null && (
+                <Tooltip
+                  title={
+                    labelFromDataset === 1
+                      ? "Labeled as relevant in the dataset"
+                      : "Labeled as not relevant in the dataset"
+                  }
                 >
-                  <NoteAltOutlinedIcon />
-                </IconButton>
-              </Tooltip>
+                  <IconButton size="small">
+                    <Label
+                      fontSize="small"
+                      sx={{
+                        color: (theme) =>
+                          labelFromDataset === 1
+                            ? theme.palette.tertiary.main
+                            : theme.palette.grey[600],
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {editState && showNotes && (
+                <Tooltip
+                  title="Add note (keyboard shortcut: N)"
+                  enterDelay={2000}
+                  leaveDelay={200}
+                  placement="bottom"
+                >
+                  <IconButton
+                    onClick={toggleShowNotesDialog}
+                    aria-label="add note"
+                    disabled={isLoading || isSuccess}
+                    size="small"
+                  >
+                    <NoteAltOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+          ) : (
+            <>
+              {labelFromDataset !== null && (
+                <Tooltip
+                  title={
+                    labelFromDataset === 1
+                      ? "Labeled as relevant in the dataset"
+                      : "Labeled as not relevant in the dataset"
+                  }
+                >
+                  <IconButton size="small">
+                    <Label
+                      fontSize="small"
+                      sx={{
+                        color: (theme) =>
+                          labelFromDataset === 1
+                            ? theme.palette.tertiary.main
+                            : theme.palette.grey[600],
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {editState && showNotes && (
+                <Tooltip
+                  title="Add note (keyboard shortcut: N)"
+                  enterDelay={2000}
+                  leaveDelay={200}
+                  placement="bottom"
+                >
+                  <IconButton
+                    onClick={toggleShowNotesDialog}
+                    aria-label="add note"
+                    disabled={isLoading || isSuccess}
+                  >
+                    <NoteAltOutlinedIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </>
           )}
 
@@ -475,7 +501,6 @@ const RecordCardLabeler = ({
                   horizontal: "right",
                 }}
               >
-                {/* toggle label */}
                 {(label === 1 || label === 0) && (
                   <MenuItem onClick={() => makeDecision(label === 1 ? 0 : 1)}>
                     <ListItemIcon>

@@ -16,7 +16,6 @@ import {
   RadioGroup,
   Slider,
   Stack,
-  Switch,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -41,7 +40,7 @@ const SettingsDialog = ({ onSettings, toggleSettings }) => {
 
   // second layer state
   const [fontSizeSetting, toggleFontSizeSetting] = useToggle();
-  const { fontSize, modelLogLevel, orientation } = useReviewSettings();
+  const { fontSize } = useReviewSettings();
 
   const dispatchReviewSettings = useReviewSettingsDispatch();
 
@@ -157,48 +156,6 @@ const SettingsDialog = ({ onSettings, toggleSettings }) => {
               id="change-text-size"
               primary="Font size"
               secondary={fontSizeOptions[fontSize]}
-            />
-          </ListItem>
-          <ListItem
-            secondaryAction={
-              <Switch
-                checked={modelLogLevel === "info"}
-                onChange={() => {
-                  dispatchReviewSettings({
-                    type: "modelLogLevel",
-                    modelLogLevel:
-                      modelLogLevel === "info" ? "warning" : "info",
-                  });
-                }}
-                inputProps={{ "aria-label": "controlled" }}
-              />
-            }
-          >
-            <ListItemText
-              id="change-show-model-info"
-              primary="Show model information"
-              secondary={"Warnings and errors are always shown"}
-            />
-          </ListItem>
-          <ListItem
-            secondaryAction={
-              <Switch
-                checked={orientation === "landscape"}
-                onChange={() => {
-                  dispatchReviewSettings({
-                    type: "orientation",
-                    orientation:
-                      orientation === "portrait" ? "landscape" : "portrait",
-                  });
-                }}
-                inputProps={{ "aria-label": "controlled" }}
-              />
-            }
-          >
-            <ListItemText
-              id="change-show-model-info"
-              primary="Screen in landscape view"
-              secondary={"Useful for wide screens"}
             />
           </ListItem>
         </List>

@@ -24,8 +24,6 @@ import { WordMark } from "icons/WordMark";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
 import { InitialsAvatar } from "StyledComponents/InitialsAvatar";
 import { useToggle } from "hooks/useToggle";
-import { ElasIcon } from "icons";
-import ElasGameDialog from "./ElasGame";
 
 const HeaderTeam = ({ project_id }) => {
   const navigate = useNavigate();
@@ -104,11 +102,7 @@ const HeaderTeam = ({ project_id }) => {
 };
 
 const Header = ({ toggleNavDrawer, menuOpenButton = true }) => {
-  const [openGame, toggleGame] = useToggle();
   const { project_id } = useParams();
-
-  const { pathname } = useLocation();
-  const isReviewPath = pathname.endsWith("/reviewer");
 
   const headerActive = useScrollTrigger({
     threshold: 0,
@@ -117,6 +111,7 @@ const Header = ({ toggleNavDrawer, menuOpenButton = true }) => {
   return (
     <>
       <AppBar
+        id="app-header"
         color={"inherit"}
         position="fixed"
         square={true}
@@ -156,14 +151,6 @@ const Header = ({ toggleNavDrawer, menuOpenButton = true }) => {
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            {project_id && isReviewPath && (
-              <Tooltip title={"Go on adventure with Elas"} placement={"right"}>
-                <IconButton onClick={toggleGame}>
-                  <ElasIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-
             {window.authentication && project_id && (
               <HeaderTeam project_id={project_id} />
             )}
@@ -172,9 +159,6 @@ const Header = ({ toggleNavDrawer, menuOpenButton = true }) => {
         </Toolbar>
       </AppBar>
       <Toolbar aria-label="placeholder toolbar" />
-
-      {/* Game */}
-      <ElasGameDialog open={openGame} toggleOpen={toggleGame} />
     </>
   );
 };
