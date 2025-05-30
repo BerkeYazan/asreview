@@ -13,13 +13,7 @@ import {
 } from "@mui/material";
 
 import { ModelTraining } from "@mui/icons-material";
-import { StyledLightBulb } from "StyledComponents/StyledLightBulb";
-
-import {
-  ChevronLeft,
-  ChevronRight,
-  ScreenRotationAlt as ScreenRotationAltIcon,
-} from "@mui/icons-material";
+import RecordModelTrainingIcon from "icons/RecordModelTrainingIcon";
 import { useMediaQuery } from "@mui/material";
 import { ProjectAPI } from "api";
 import { useQuery } from "react-query";
@@ -27,11 +21,7 @@ import {
   useReviewSettings,
   useReviewSettingsDispatch,
 } from "context/ReviewSettingsContext";
-import {
-  FocusModeToggle,
-  FontSizeAdjuster,
-} from "Components/AccessibilityControls";
-import { ElasIcon } from "icons";
+import AccessibilityControlsBar from "Components/AccessibilityControls/AccessibilityControlsBar";
 
 const FlowChartStep = ({
   stepNumber,
@@ -232,7 +222,6 @@ const RecordCardModelTraining = ({
 }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [popoverAnchorEl, setPopoverAnchorEl] = React.useState(null);
-  const [controlsVisible, setControlsVisible] = React.useState(false);
 
   const handlePopoverOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -282,253 +271,236 @@ const RecordCardModelTraining = ({
   };
 
   const alertMessage = getAlertMessage();
-
   const renderControls = record?.state?.querier && showControls;
 
   return (
     <Stack spacing={1} sx={sx}>
-      {alertMessage && (
-        <>
-          <Alert
-            severity="warning"
-            icon={<ModelTraining />}
-            sx={{ mb: 0 }}
-            action={
-              renderControls && (
+      {alertMessage && renderControls ? (
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ width: "100%" }}
+        >
+          <Box sx={{ flexGrow: 1, mr: 1.5 }}>
+            <Alert
+              severity="warning"
+              icon={<ModelTraining />}
+              action={
                 <IconButton size="small" onClick={handlePopoverOpen}>
-                  <StyledLightBulb fontSize="small" />
+                  <RecordModelTrainingIcon fontSize="medium" />
                 </IconButton>
-              )
-            }
-          >
-            {alertMessage}
-          </Alert>
-          <Popover
-            open={openPopover}
-            anchorEl={anchorEl}
-            onClose={handlePopoverClose}
-            slotProps={{
-              paper: {
-                sx: (theme) => ({
-                  borderRadius: 3,
-                  maxWidth: 400,
-                  boxShadow: theme.shadows[8],
-                }),
-              },
-            }}
-          >
-            <Box sx={{ p: 2.5 }}>
-              <Stack spacing={2}>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Model Training Indicators
-                </Typography>
-                <Divider />
-                <Box>
-                  <Alert
-                    severity="warning"
-                    icon={<ModelTraining />}
-                    sx={{ mb: 1.5 }}
-                  >
-                    Record presented in a random manner
-                  </Alert>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      textAlign: "justify",
-                      mb: 2,
-                      color: "text.secondary",
-                    }}
-                  >
-                    This occurs regularly during the initial model training
-                    phase as the model learns, or when this query strategy has
-                    been explicitly chosen in <b>Customize</b>
-                  </Typography>
-                </Box>
-                <Box>
-                  <Alert
-                    severity="warning"
-                    icon={<ModelTraining />}
-                    sx={{ mb: 1.5 }}
-                  >
-                    Record presented in a top-down manner
-                  </Alert>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      textAlign: "justify",
-                      mb: 2,
-                      color: "text.secondary",
-                    }}
-                  >
-                    This occurs only when this query strategy has been
-                    explicitly chosen in <b>Customize</b>
-                  </Typography>
-                </Box>
-                <Box>
-                  <Alert
-                    severity="warning"
-                    icon={<ModelTraining />}
-                    sx={{ mb: 1.5 }}
-                  >
-                    Record was labeled either through manual search or the label
-                    was already available in the dataset
-                  </Alert>
-                  <Typography
-                    variant="body2"
-                    sx={{ textAlign: "justify", color: "text.secondary" }}
-                  >
-                    This occurs if you labeled the record yourself using the
-                    <b> Prior Knowledge</b> feature, or if its label was already
-                    present in the dataset when it was imported
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ display: "flex", justifyContent: "flex-start", pt: 1 }}
-                >
-                  <Button
-                    href="https://asreview.readthedocs.io/en/latest/guides/activelearning.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    size="small"
-                  >
-                    Learn more
-                  </Button>
-                </Box>
-              </Stack>
-            </Box>
-          </Popover>
-        </>
-      )}
-
-      {renderControls && (
-        <Box display="flex" justifyContent="flex-end" alignItems="center">
-          <IconButton
-            onClick={() => setControlsVisible(!controlsVisible)}
-            size="small"
-            sx={{ ml: 1 }}
-            aria-label={`${controlsVisible ? "Hide" : "Show"} review controls`}
-          >
-            {controlsVisible ? (
-              <ChevronRight fontSize="small" sx={{ color: "text.secondary" }} />
-            ) : (
-              <ChevronLeft fontSize="small" sx={{ color: "text.secondary" }} />
-            )}
-          </IconButton>
-          {controlsVisible && (
-            <Stack direction="row" spacing={0.5}>
-              <Tooltip
-                title={
-                  orientation === "portrait"
-                    ? "Switch to landscape view"
-                    : "Switch to portrait view"
-                }
+              }
+            >
+              {alertMessage}
+            </Alert>
+          </Box>
+          <Box display="flex" alignItems="center">
+            <AccessibilityControlsBar
+              orientation={orientation}
+              dispatchReviewSettings={dispatchReviewSettings}
+              onToggleElasGame={onToggleElasGame}
+            />
+            <Tooltip title="Show Model Info">
+              <IconButton
+                onClick={handleFlowchartPopoverOpen}
+                size="small"
+                aria-label="Show model information flowchart"
+                sx={{ ml: 0.5 }}
               >
+                <RecordModelTrainingIcon
+                  fontSize="medium"
+                  sx={{ color: "text.secondary" }}
+                />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Stack>
+      ) : (
+        <>
+          {alertMessage && (
+            <Alert
+              severity="warning"
+              icon={<ModelTraining />}
+              sx={{ mb: 0 }}
+              action={
+                <IconButton size="small" onClick={handlePopoverOpen}>
+                  <RecordModelTrainingIcon fontSize="medium" />
+                </IconButton>
+              }
+            >
+              {alertMessage}
+            </Alert>
+          )}
+          {renderControls && (
+            <Box display="flex" justifyContent="flex-end" alignItems="center">
+              <AccessibilityControlsBar
+                orientation={orientation}
+                dispatchReviewSettings={dispatchReviewSettings}
+                onToggleElasGame={onToggleElasGame}
+              />
+              <Tooltip title="Show Model Info">
                 <IconButton
-                  onClick={() => {
-                    dispatchReviewSettings({
-                      type: "orientation",
-                      orientation:
-                        orientation === "portrait" ? "landscape" : "portrait",
-                    });
-                  }}
+                  onClick={handleFlowchartPopoverOpen}
                   size="small"
-                  aria-label={
-                    orientation === "portrait"
-                      ? "Switch to landscape view"
-                      : "Switch to portrait view"
-                  }
-                  sx={{ display: isMobile ? "none" : "inline-flex" }}
+                  aria-label="Show model information flowchart"
+                  sx={{ ml: 0.5 }}
                 >
-                  <ScreenRotationAltIcon
-                    fontSize="small"
+                  <RecordModelTrainingIcon
+                    fontSize="medium"
                     sx={{ color: "text.secondary" }}
                   />
                 </IconButton>
               </Tooltip>
-              <Box sx={{ display: isMobile ? "none" : "block" }}>
-                <FocusModeToggle />
-              </Box>
-              <FontSizeAdjuster />
-              <Tooltip title="Go on adventure with Elas">
-                <IconButton
-                  onClick={onToggleElasGame}
-                  size="small"
-                  aria-label="Open Elas game"
-                >
-                  <ElasIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          )}
-          <Tooltip title="Show Model Info">
-            <IconButton
-              onClick={handleFlowchartPopoverOpen}
-              size="small"
-              aria-label="Show model information flowchart"
-              sx={{ ml: 0.5 }}
-            >
-              <StyledLightBulb
-                fontSize="small"
-                sx={{ color: "text.secondary" }}
-              />
-            </IconButton>
-          </Tooltip>
-          <Popover
-            open={openFlowchartPopover}
-            anchorEl={popoverAnchorEl}
-            onClose={handleFlowchartPopoverClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "center",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "center",
-            }}
-            slotProps={{
-              paper: {
-                sx: (theme) => ({
-                  borderRadius: 3,
-                  boxShadow: theme.shadows[8],
-                  maxWidth: "420px",
-                  width: "calc(100% - 24px)",
-                  margin: "0 12px",
-                }),
-              },
-            }}
-          >
-            <Box sx={{ p: 2.5 }}>
-              <Stack spacing={2}>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{ textAlign: "center", fontWeight: "bold" }}
-                >
-                  Your Model Training Process
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ textAlign: "center", mb: 1, color: "text.primary" }}
-                >
-                  ASReview employs an active learning cycle that learns from
-                  your decisions to help you find relevant records more
-                  efficiently.
-                </Typography>
-                <ModelFlowChart record={record} />
-                <Button
-                  href="https://asreview.readthedocs.io/en/latest/guides/activelearning.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="small"
-                  sx={{ mt: 1, alignSelf: "flex-start" }}
-                >
-                  Learn more
-                </Button>
-              </Stack>
             </Box>
-          </Popover>
-        </Box>
+          )}
+        </>
       )}
+      <Popover
+        open={openPopover}
+        anchorEl={anchorEl}
+        onClose={handlePopoverClose}
+        slotProps={{
+          paper: {
+            sx: (theme) => ({
+              borderRadius: 3,
+              maxWidth: 400,
+              boxShadow: theme.shadows[8],
+            }),
+          },
+        }}
+      >
+        <Box sx={{ p: 2.5 }}>
+          <Stack spacing={2}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              Model Training Indicators
+            </Typography>
+            <Divider />
+            <Box>
+              <Alert
+                severity="warning"
+                icon={<ModelTraining />}
+                sx={{ mb: 1.5 }}
+              >
+                Record presented in a random manner
+              </Alert>
+              <Typography
+                variant="body2"
+                sx={{
+                  textAlign: "justify",
+                  mb: 2,
+                  color: "text.secondary",
+                }}
+              >
+                This occurs regularly during the initial model training phase as
+                the model learns, or when this query strategy has been
+                explicitly chosen in <b>Customize</b>
+              </Typography>
+            </Box>
+            <Box>
+              <Alert
+                severity="warning"
+                icon={<ModelTraining />}
+                sx={{ mb: 1.5 }}
+              >
+                Record presented in a top-down manner
+              </Alert>
+              <Typography
+                variant="body2"
+                sx={{
+                  textAlign: "justify",
+                  mb: 2,
+                  color: "text.secondary",
+                }}
+              >
+                This occurs only when this query strategy has been explicitly
+                chosen in <b>Customize</b>
+              </Typography>
+            </Box>
+            <Box>
+              <Alert
+                severity="warning"
+                icon={<ModelTraining />}
+                sx={{ mb: 1.5 }}
+              >
+                Record was labeled either through manual search or the label was
+                already available in the dataset
+              </Alert>
+              <Typography
+                variant="body2"
+                sx={{ textAlign: "justify", color: "text.secondary" }}
+              >
+                This occurs if you labeled the record yourself using the
+                <b> Prior Knowledge</b> feature, or if its label was already
+                present in the dataset when it was imported
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-start", pt: 1 }}>
+              <Button
+                href="https://asreview.readthedocs.io/en/latest/guides/activelearning.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+              >
+                Learn more
+              </Button>
+            </Box>
+          </Stack>
+        </Box>
+      </Popover>
+      <Popover
+        open={openFlowchartPopover}
+        anchorEl={popoverAnchorEl}
+        onClose={handleFlowchartPopoverClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "center",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "center",
+        }}
+        slotProps={{
+          paper: {
+            sx: (theme) => ({
+              borderRadius: 3,
+              boxShadow: theme.shadows[8],
+              maxWidth: "420px",
+              width: "calc(100% - 24px)",
+              margin: "0 12px",
+            }),
+          },
+        }}
+      >
+        <Box sx={{ p: 2.5 }}>
+          <Stack spacing={2}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ textAlign: "center", fontWeight: "bold" }}
+            >
+              Your Model Training Process
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ textAlign: "center", mb: 1, color: "text.primary" }}
+            >
+              ASReview employs an active learning cycle that learns from your
+              decisions to help you find relevant records more efficiently.
+            </Typography>
+            <ModelFlowChart record={record} />
+            <Button
+              href="https://asreview.readthedocs.io/en/latest/guides/activelearning.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              sx={{ mt: 1, alignSelf: "flex-start" }}
+            >
+              Learn more
+            </Button>
+          </Stack>
+        </Box>
+      </Popover>
     </Stack>
   );
 };

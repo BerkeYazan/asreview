@@ -140,18 +140,6 @@ const RecordCardContent = ({ record, fontSize, collapseAbstract }) => {
             )}
           </Typography>
         </Box>
-        {record.keywords && (
-          <Box sx={{ pt: 1 }}>
-            <Typography sx={{ color: "text.secondary", fontWeight: "bold" }}>
-              {record.keywords.map((keyword, index) => (
-                <span key={index}>
-                  {index > 0 && " • "}
-                  {keyword}
-                </span>
-              ))}
-            </Typography>
-          </Box>
-        )}
       </Stack>
     </CardContent>
   );
@@ -231,6 +219,7 @@ const RecordCard = ({
               showNotes={showNotes}
               tagsForm={record.tags_form}
               tagValues={record.state?.tags}
+              keywords={record.keywords}
               landscape={landscape}
               hotkeys={hotkeys}
               changeDecision={changeDecision}

@@ -23,6 +23,7 @@ import {
   Tooltip,
   Typography,
   Alert,
+  Popover,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import React from "react";
@@ -30,6 +31,7 @@ import { useMutation, useQueryClient } from "react-query";
 
 import { useHotkeys } from "react-hotkeys-hook";
 
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import LibraryAddOutlinedIcon from "@mui/icons-material/LibraryAddOutlined";
 import MoreVert from "@mui/icons-material/MoreVert";
 import NotInterestedOutlinedIcon from "@mui/icons-material/NotInterestedOutlined";
@@ -40,6 +42,8 @@ import TimeAgo from "javascript-time-ago";
 
 import { DeleteOutline, Label } from "@mui/icons-material";
 import en from "javascript-time-ago/locale/en";
+
+import CloseIcon from "@mui/icons-material/Close";
 
 TimeAgo.addLocale(en);
 const timeAgo = new TimeAgo("en-US");
@@ -142,12 +146,14 @@ const RecordCardLabeler = ({
   landscape = false,
   retrainAfterDecision = true,
   changeDecision = true,
+  keywords = null,
 }) => {
   const [editState] = useToggle(!(label === 1 || label === 0));
   const [showNotesDialog, toggleShowNotesDialog] = useToggle(false);
   const [tagValuesState, setTagValuesState] = React.useState(
     tagValues ? tagValues : structuredClone(tagsForm),
   );
+  const [keywordsAnchorEl, setKeywordsAnchorEl] = React.useState(null);
 
   const { error, isError, isLoading, mutate, isSuccess } = useMutation(
     ProjectAPI.mutateClassification,
@@ -181,6 +187,16 @@ const RecordCardLabeler = ({
       retrain_model: retrainAfterDecision,
     });
   };
+
+  const handleKeywordsPopoverOpen = (event) => {
+    setKeywordsAnchorEl(event.currentTarget);
+  };
+
+  const handleKeywordsPopoverClose = () => {
+    setKeywordsAnchorEl(null);
+  };
+
+  const openKeywordsPopover = Boolean(keywordsAnchorEl);
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openMenu = Boolean(anchorEl);
@@ -400,6 +416,18 @@ const RecordCardLabeler = ({
                   </IconButton>
                 </Tooltip>
               )}
+              {keywords && keywords.length > 0 && (
+                <Tooltip title="Show keywords" placement="bottom">
+                  <IconButton
+                    onClick={handleKeywordsPopoverOpen}
+                    aria-label="show keywords"
+                    disabled={isLoading || isSuccess}
+                    size="small"
+                  >
+                    <LocalOfferIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               {editState && showNotes && (
                 <Tooltip
                   title="Add note (keyboard shortcut: N)"
@@ -441,6 +469,18 @@ const RecordCardLabeler = ({
                   </IconButton>
                 </Tooltip>
               )}
+              {keywords && keywords.length > 0 && (
+                <Tooltip title="Show keywords" placement="bottom">
+                  <IconButton
+                    onClick={handleKeywordsPopoverOpen}
+                    aria-label="show keywords"
+                    disabled={isLoading || isSuccess}
+                    size="small"
+                  >
+                    <LocalOfferIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               {editState && showNotes && (
                 <Tooltip
                   title="Add note (keyboard shortcut: N)"
@@ -452,8 +492,9 @@ const RecordCardLabeler = ({
                     onClick={toggleShowNotesDialog}
                     aria-label="add note"
                     disabled={isLoading || isSuccess}
+                    size="small"
                   >
-                    <NoteAltOutlinedIcon />
+                    <NoteAltOutlinedIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               )}
@@ -547,6 +588,94 @@ const RecordCardLabeler = ({
             onClose={toggleShowNotesDialog}
             note={note}
           />
+          {keywords && keywords.length > 0 && (
+            <Popover
+              open={openKeywordsPopover}
+              anchorEl={keywordsAnchorEl}
+              onClose={handleKeywordsPopoverClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "center",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "center",
+              }}
+              PaperProps={{
+                sx: (theme) => ({
+                  borderRadius: 2,
+                  boxShadow: theme.shadows[4],
+                  maxWidth: 480,
+                }),
+              }}
+            >
+              <Box
+                sx={(theme) => ({
+                  paddingTop: theme.spacing(2),
+                  paddingBottom: theme.spacing(2),
+                  paddingLeft: theme.spacing(2.5),
+                  paddingRight: theme.spacing(2.5),
+                  maxWidth: 480,
+                  position: "relative",
+                  overflowY: "auto",
+                })}
+              >
+                <IconButton
+                  aria-label="close keywords popover"
+                  onClick={handleKeywordsPopoverClose}
+                  sx={{
+                    position: "absolute",
+                    right: 8,
+                    top: 8,
+                    color: (theme) => theme.palette.grey[500],
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    textAlign: "center",
+                    fontWeight: "medium",
+                    mb: 1.5,
+                    mt: 1,
+                  }}
+                >
+                  Keywords
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  flexWrap="wrap"
+                  useFlexGap
+                  justifyContent="flex-start"
+                >
+                  {keywords.map((keyword) => (
+                    <Box
+                      key={keyword}
+                      sx={{
+                        backgroundColor: (theme) => theme.palette.tertiary.main,
+                        color: (theme) =>
+                          theme.palette.getContrastText(
+                            theme.palette.tertiary.main,
+                          ),
+                        borderRadius: 1.5,
+                        px: 1.5,
+                        py: 0.75,
+                        fontSize: "0.875rem",
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {keyword}
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            </Popover>
+          )}
         </CardActions>
       </Box>
     </Stack>

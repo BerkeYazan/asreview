@@ -83,9 +83,9 @@ export const FocusModeToggle = () => {
         }
       >
         {focusMode ? (
-          <FullscreenExit fontSize="small" sx={{ color: "text.secondary" }} />
+          <FullscreenExit fontSize="medium" sx={{ color: "text.secondary" }} />
         ) : (
-          <Fullscreen fontSize="small" sx={{ color: "text.secondary" }} />
+          <Fullscreen fontSize="medium" sx={{ color: "text.secondary" }} />
         )}
       </IconButton>
     </Tooltip>
@@ -111,7 +111,7 @@ export const FontSizeAdjuster = () => {
     <>
       <Tooltip title="Adjust font size">
         <IconButton onClick={handlePopoverOpen} size="small">
-          <FormatSize fontSize="small" sx={{ color: "text.secondary" }} />
+          <FormatSize fontSize="medium" sx={{ color: "text.secondary" }} />
         </IconButton>
       </Tooltip>
       <Popover
