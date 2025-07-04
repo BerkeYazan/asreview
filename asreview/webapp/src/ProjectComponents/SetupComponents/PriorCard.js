@@ -74,7 +74,7 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
         <Stack spacing={3}>
           <Box>
             <Typography variant="h6" sx={{ mb: 1 }}>
-              Prior Knowledge Explained
+              Adding Prior Knowledge
             </Typography>
             <Typography variant="body2" align="justify">
               Prior knowledge is the labeling decisions made before ASReview, or
@@ -87,9 +87,6 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
           <Divider />
 
           <Box>
-            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-              How to Add Prior Knowledge
-            </Typography>
             <Grid container spacing={2}>
               <Grid xs={6}>
                 <Box
@@ -109,12 +106,12 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <SearchIcon sx={{ color: "text.secondary" }} />
                       <Typography variant="subtitle2">
-                        Search & Label
+                        Add prior knowledge
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      Search for known relevant papers and label them to train
-                      the AI
+                      Search for known records and label them to kickstart the
+                      AI learning process
                     </Typography>
                   </Stack>
                 </Box>
@@ -139,7 +136,7 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
                         sx={{ color: "text.secondary" }}
                       />
                       <Typography variant="subtitle2">
-                        Label relevant
+                        Label as relevant
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary">
@@ -168,11 +165,11 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
                         sx={{ color: "text.secondary" }}
                       />
                       <Typography variant="subtitle2">
-                        Label not relevant
+                        Label as not relevant
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      Optionally mark papers as not relevant to refine the AI's
+                      Mark papers as not relevant to refine the AI's
                       understanding
                     </Typography>
                   </Stack>
@@ -200,8 +197,8 @@ const PriorCardHeader = ({
   isLoading,
   isConfiguring,
   setIsConfiguring,
-  getPriorStatusText,
   handlePopoverOpen,
+  getPriorStatusText,
 }) => {
   return (
     <CardContent sx={{ py: 2 }}>
@@ -307,8 +304,8 @@ const PriorCard = ({ mode = projectModes.ORACLE, editable = true }) => {
         isLoading={isLoading}
         isConfiguring={isConfiguring}
         setIsConfiguring={setIsConfiguring}
-        getPriorStatusText={getPriorStatusText}
         handlePopoverOpen={handlePopoverOpen}
+        getPriorStatusText={getPriorStatusText}
       />
 
       {isConfiguring && (
@@ -320,22 +317,6 @@ const PriorCard = ({ mode = projectModes.ORACLE, editable = true }) => {
                   <Skeleton variant="rectangular" height={56} />
                 ) : (
                   <>
-                    {(data?.n_prior_inclusions === 0 ||
-                      data?.n_prior_exclusions === 0) && (
-                      <Typography>
-                        Search for one or more relevant records and label them
-                        relevant. It's also possible to label not relevant
-                        records.
-                      </Typography>
-                    )}
-                  </>
-                )}
-              </CardContent>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton variant="rectangular" width={100} height={36} />
-                ) : (
-                  <>
                     <Button
                       id={"add-prior-search"}
                       onClick={() => setOpenPriorSearch(true)}
@@ -343,7 +324,7 @@ const PriorCard = ({ mode = projectModes.ORACLE, editable = true }) => {
                       disabled={!editable}
                       sx={{ mr: 2 }}
                     >
-                      Search
+                      Add prior knowledge
                     </Button>
 
                     <Button
