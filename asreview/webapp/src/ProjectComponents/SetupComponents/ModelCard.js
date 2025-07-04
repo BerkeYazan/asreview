@@ -420,11 +420,11 @@ const ModelComponentSelect = ({
 
 const ModelCardHeader = ({
   isLoading,
-  modelConfig,
-  getModelDisplayName,
   isConfiguring,
   setIsConfiguring,
   handlePopoverOpen,
+  modelConfig,
+  getModelDisplayName,
 }) => {
   return (
     <CardContent sx={{ py: 2 }}>
@@ -579,11 +579,11 @@ const ModelCard = ({ mode = null, trainNewModel = false, editable = true }) => {
     <Card sx={{ position: "relative" }}>
       <ModelCardHeader
         isLoading={isLoading}
-        modelConfig={modelConfig}
-        getModelDisplayName={getModelDisplayName}
         isConfiguring={isConfiguring}
         setIsConfiguring={setIsConfiguring}
         handlePopoverOpen={handlePopoverOpen}
+        modelConfig={modelConfig}
+        getModelDisplayName={getModelDisplayName}
       />
 
       {isConfiguring && (
