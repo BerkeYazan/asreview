@@ -23,7 +23,6 @@ import {
 } from "@mui/material";
 import { ProjectContext } from "context/ProjectContext";
 import { useContext } from "react";
-import { LoadingCardHeader } from "StyledComponents/LoadingCardheader";
 
 import { ProjectAPI } from "api";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -491,6 +490,70 @@ const Group = ({ project_id, group }) => {
   );
 };
 
+const TagCardHeader = ({
+  isConfiguring,
+  setIsConfiguring,
+  isLoading,
+  data,
+  handlePopoverOpen,
+  getTagGroupChips,
+}) => {
+  return (
+    <CardContent sx={{ py: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+            flex: 1,
+          }}
+        >
+          <Typography variant="h6" fontWeight="medium">
+            Labeling Tags
+          </Typography>
+          {isLoading ? (
+            <Skeleton width={120} height={20} />
+          ) : (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+              {getTagGroupChips()}
+              {!data || data.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  None
+                </Typography>
+              ) : (
+                data.length > 3 && (
+                  <Typography variant="body2" color="text.secondary">
+                    +{data.length - 3} more
+                  </Typography>
+                )
+              )}
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => setIsConfiguring(!isConfiguring)}
+            sx={{ color: "text.secondary" }}
+          >
+            <TuneIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={handlePopoverOpen}>
+            <StyledLightBulb fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
+    </CardContent>
+  );
+};
+
 const TagCard = () => {
   const project_id = useContext(ProjectContext);
   const [isConfiguring, setIsConfiguring] = React.useState(false);
@@ -505,6 +568,14 @@ const TagCard = () => {
     },
   );
 
+  const handlePopoverOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+  };
+
   const getTagGroupChips = () => {
     if (isLoading || !data || data.length === 0) return null;
 
@@ -515,173 +586,63 @@ const TagCard = () => {
       ));
   };
 
-  const getTagStatusText = () => {
-    if (isLoading) return "Loading...";
-    if (!data || data.length === 0) return "None";
-
-    const totalTags = data.reduce((sum, group) => sum + group.values.length, 0);
-    return `${data.length} group${data.length > 1 ? "s" : ""}, ${totalTags} tag${totalTags > 1 ? "s" : ""}`;
-  };
-
-  if (!isConfiguring) {
-    return (
-      <Card sx={{ position: "relative" }}>
-        <CardContent sx={{ py: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.5,
-                flex: 1,
-              }}
-            >
-              <Typography variant="h6" fontWeight="medium">
-                Labeling Tags
-              </Typography>
-              {isLoading ? (
-                <Skeleton width={120} height={20} />
-              ) : (
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}
-                >
-                  {getTagGroupChips()}
-                  {!data || data.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      None
-                    </Typography>
-                  ) : (
-                    data.length > 3 && (
-                      <Typography variant="body2" color="text.secondary">
-                        +{data.length - 3} more
-                      </Typography>
-                    )
-                  )}
-                </Box>
-              )}
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton
-                size="small"
-                onClick={() => setIsConfiguring(true)}
-                sx={{ color: "text.secondary" }}
-              >
-                <TuneIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={(event) => {
-                  setAnchorEl(event.currentTarget);
-                }}
-              >
-                <StyledLightBulb fontSize="small" />
-              </IconButton>
-            </Box>
-          </Box>
-        </CardContent>
-
-        <InfoPopover
-          anchorEl={anchorEl}
-          handlePopoverClose={() => {
-            setAnchorEl(null);
-          }}
-        />
-      </Card>
-    );
-  }
-
   return (
     <Card>
-      <CardContent sx={{ py: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 0.5,
-              flex: 1,
-            }}
-          >
-            <Typography variant="h6" fontWeight="medium">
-              Labeling Tags
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+      <TagCardHeader
+        isConfiguring={isConfiguring}
+        setIsConfiguring={setIsConfiguring}
+        isLoading={isLoading}
+        data={data}
+        handlePopoverOpen={handlePopoverOpen}
+        getTagGroupChips={getTagGroupChips}
+      />
+
+      {isConfiguring && (
+        <>
+          <CardContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Tags and tag groups are used to label records with additional
               information
             </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={() => setIsConfiguring(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <TuneIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                setAnchorEl(event.currentTarget);
-              }}
-            >
-              <StyledLightBulb fontSize="small" />
-            </IconButton>
-          </Box>
-        </Box>
-      </CardContent>
+            {isLoading ? (
+              <Skeleton variant="rectangular" height={56} />
+            ) : (
+              <>
+                {data.length === 0 && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Your tags will appear here
+                  </Alert>
+                )}
+                {data.map((c, index) => (
+                  <Group key={index} group={c} project_id={project_id} />
+                ))}
+              </>
+            )}
+          </CardContent>
+
+          <CardContent>
+            {isLoading ? (
+              <Skeleton variant="rectangular" width={100} height={36} />
+            ) : (
+              <>
+                <MutateGroupDialog
+                  project_id={project_id}
+                  open={dialogOpen}
+                  onClose={toggleDialogOpen}
+                />
+                <Button onClick={toggleDialogOpen} variant="contained">
+                  Add tags
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </>
+      )}
 
       <InfoPopover
         anchorEl={anchorEl}
-        handlePopoverClose={() => {
-          setAnchorEl(null);
-        }}
+        handlePopoverClose={handlePopoverClose}
       />
-
-      <CardContent>
-        {isLoading ? (
-          <Skeleton variant="rectangular" height={56} />
-        ) : (
-          <>
-            {data.length === 0 && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Your tags will appear here
-              </Alert>
-            )}
-            {data.map((c, index) => (
-              <Group key={index} group={c} project_id={project_id} />
-            ))}
-          </>
-        )}
-      </CardContent>
-
-      <CardContent>
-        {isLoading ? (
-          <Skeleton variant="rectangular" width={100} height={36} />
-        ) : (
-          <>
-            <MutateGroupDialog
-              project_id={project_id}
-              open={dialogOpen}
-              onClose={toggleDialogOpen}
-            />
-            <Button onClick={toggleDialogOpen} variant="contained">
-              Add tags
-            </Button>
-          </>
-        )}
-      </CardContent>
     </Card>
   );
 };

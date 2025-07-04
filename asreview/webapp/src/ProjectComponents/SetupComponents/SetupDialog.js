@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Collapse,
   Dialog,
   DialogActions,
   DialogContent,

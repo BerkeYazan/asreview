@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Divider,
   IconButton,
   Popover,
@@ -20,13 +19,234 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { LabelHistoryPrior } from "ProjectComponents/HistoryComponents";
-import { LoadingCardHeader } from "StyledComponents/LoadingCardheader";
 import { StyledLightBulb } from "StyledComponents/StyledLightBulb";
 import { ProjectAPI } from "api";
 import { ProjectContext } from "context/ProjectContext";
 import { projectModes } from "globals.js";
 import { useToggle } from "hooks/useToggle";
 import { AddPriorKnowledge } from "./SearchComponents";
+
+const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
+  return (
+    <Popover
+      open={Boolean(anchorEl)}
+      anchorEl={anchorEl}
+      onClose={handlePopoverClose}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "right",
+      }}
+      transformOrigin={{
+        vertical: "top",
+        horizontal: "right",
+      }}
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          maxWidth: 350,
+        },
+      }}
+    >
+      <Box
+        sx={(theme) => ({
+          p: 3,
+          maxHeight: "80vh",
+          overflow: "auto",
+          "&::-webkit-scrollbar": {
+            width: "8px",
+            background: "transparent",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: (theme) => theme.palette.grey[300],
+            borderRadius: "4px",
+            "&:hover": {
+              background: (theme) => theme.palette.grey[400],
+            },
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "transparent",
+            borderRadius: "4px",
+          },
+          scrollbarWidth: "thin",
+          scrollbarColor: (theme) => `${theme.palette.grey[300]} transparent`,
+        })}
+      >
+        <Stack spacing={3}>
+          <Box>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Prior Knowledge Explained
+            </Typography>
+            <Typography variant="body2" align="justify">
+              Prior knowledge is the labeling decisions made before ASReview, or
+              manually added here. It helps the AI understand your research
+              criteria from the start, making the learning process more
+              efficient.
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+              How to Add Prior Knowledge
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid xs={6}>
+                <Box
+                  sx={(theme) => ({
+                    p: 2,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    height: "100%",
+                    bgcolor:
+                      theme.palette.mode === "light"
+                        ? "background.paper"
+                        : "transparent",
+                  })}
+                >
+                  <Stack spacing={1}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <SearchIcon sx={{ color: "text.secondary" }} />
+                      <Typography variant="subtitle2">
+                        Search & Label
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Search for known relevant papers and label them to train
+                      the AI
+                    </Typography>
+                  </Stack>
+                </Box>
+              </Grid>
+              <Grid xs={6}>
+                <Box
+                  sx={(theme) => ({
+                    p: 2,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    height: "100%",
+                    bgcolor:
+                      theme.palette.mode === "light"
+                        ? "background.paper"
+                        : "transparent",
+                  })}
+                >
+                  <Stack spacing={1}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <LibraryAddOutlinedIcon
+                        sx={{ color: "text.secondary" }}
+                      />
+                      <Typography variant="subtitle2">
+                        Label relevant
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Mark papers as relevant that match your research criteria
+                    </Typography>
+                  </Stack>
+                </Box>
+              </Grid>
+              <Grid xs={6}>
+                <Box
+                  sx={(theme) => ({
+                    p: 2,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    height: "100%",
+                    bgcolor:
+                      theme.palette.mode === "light"
+                        ? "background.paper"
+                        : "transparent",
+                  })}
+                >
+                  <Stack spacing={1}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <NotInterestedOutlinedIcon
+                        sx={{ color: "text.secondary" }}
+                      />
+                      <Typography variant="subtitle2">
+                        Label not relevant
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Optionally mark papers as not relevant to refine the AI's
+                      understanding
+                    </Typography>
+                  </Stack>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box>
+            <Button
+              href="https://asreview.readthedocs.io/en/stable/lab/project_create.html#prior-knowledge"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learn more
+            </Button>
+          </Box>
+        </Stack>
+      </Box>
+    </Popover>
+  );
+};
+
+const PriorCardHeader = ({
+  isLoading,
+  isConfiguring,
+  setIsConfiguring,
+  getPriorStatusText,
+  handlePopoverOpen,
+}) => {
+  return (
+    <CardContent sx={{ py: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+            flex: 1,
+          }}
+        >
+          <Typography variant="h6" fontWeight="medium">
+            Prior Knowledge
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {isLoading ? (
+              <Skeleton width={120} height={20} />
+            ) : (
+              getPriorStatusText()
+            )}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => setIsConfiguring(!isConfiguring)}
+            sx={{ color: "text.secondary" }}
+          >
+            <TuneIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={handlePopoverOpen}>
+            <StyledLightBulb fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
+    </CardContent>
+  );
+};
 
 const PriorCard = ({ mode = projectModes.ORACLE, editable = true }) => {
   const project_id = useContext(ProjectContext);
@@ -72,566 +292,99 @@ const PriorCard = ({ mode = projectModes.ORACLE, editable = true }) => {
     const exclusions = data.n_prior_exclusions || 0;
 
     if (inclusions > 0 && exclusions > 0) {
-      return `${inclusions} relevant, ${exclusions} irrelevant`;
+      return `${inclusions} relevant, ${exclusions} not relevant`;
     } else if (inclusions > 0) {
       return `${inclusions} relevant record${inclusions > 1 ? "s" : ""}`;
     } else if (exclusions > 0) {
-      return `${exclusions} irrelevant record${exclusions > 1 ? "s" : ""}`;
+      return `${exclusions} not relevant record${exclusions > 1 ? "s" : ""}`;
     }
     return "None";
   };
 
-  if (!isConfiguring) {
-    return (
-      <Card sx={{ position: "relative" }}>
-        <CardContent sx={{ py: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.5,
-                flex: 1,
-              }}
-            >
-              <Typography variant="h6" fontWeight="medium">
-                Prior Knowledge
-              </Typography>
-              {isLoading ? (
-                <Skeleton width={120} height={20} />
-              ) : (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1 }}
-                >
-                  {getPriorStatusText()}
-                </Typography>
-              )}
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton
-                size="small"
-                onClick={() => setIsConfiguring(true)}
-                sx={{ color: "text.secondary" }}
-              >
-                <TuneIcon fontSize="small" />
-              </IconButton>
-              <IconButton size="small" onClick={handlePopoverOpen}>
-                <StyledLightBulb fontSize="small" />
-              </IconButton>
-            </Box>
-          </Box>
-        </CardContent>
-
-        <Popover
-          open={Boolean(anchorEl)}
-          anchorEl={anchorEl}
-          onClose={handlePopoverClose}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              maxWidth: 350,
-            },
-          }}
-        >
-          <Box
-            sx={(theme) => ({
-              p: 3,
-              maxHeight: "80vh",
-              overflow: "auto",
-              "&::-webkit-scrollbar": {
-                width: "8px",
-                background: "transparent",
-              },
-              "&::-webkit-scrollbar-thumb": {
-                background: (theme) => theme.palette.grey[300],
-                borderRadius: "4px",
-                "&:hover": {
-                  background: (theme) => theme.palette.grey[400],
-                },
-              },
-              "&::-webkit-scrollbar-track": {
-                background: "transparent",
-                borderRadius: "4px",
-              },
-              scrollbarWidth: "thin",
-              scrollbarColor: (theme) =>
-                `${theme.palette.grey[300]} transparent`,
-            })}
-          >
-            <Stack spacing={3}>
-              <Box>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  Prior Knowledge Explained
-                </Typography>
-                <Typography variant="body2" align="justify">
-                  Prior knowledge is the labeling decisions made before
-                  ASReview, or manually added here. It helps the AI understand
-                  your research criteria from the start, making the learning
-                  process more efficient.
-                </Typography>
-              </Box>
-
-              <Divider />
-
-              <Box>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  sx={{ mb: 2 }}
-                >
-                  How to Add Prior Knowledge
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid xs={6}>
-                    <Box
-                      sx={(theme) => ({
-                        p: 2,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        height: "100%",
-                        bgcolor:
-                          theme.palette.mode === "light"
-                            ? "background.paper"
-                            : "transparent",
-                      })}
-                    >
-                      <Stack spacing={1}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <SearchIcon sx={{ color: "text.secondary" }} />
-                          <Typography variant="subtitle2">
-                            Search & Label
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Search for known relevant papers and label them to
-                          train the AI
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Grid>
-                  <Grid xs={6}>
-                    <Box
-                      sx={(theme) => ({
-                        p: 2,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        height: "100%",
-                        bgcolor:
-                          theme.palette.mode === "light"
-                            ? "background.paper"
-                            : "transparent",
-                      })}
-                    >
-                      <Stack spacing={1}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <LibraryAddOutlinedIcon
-                            sx={{ color: "text.secondary" }}
-                          />
-                          <Typography variant="subtitle2">
-                            Label relevant
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Mark papers as relevant that match your research
-                          criteria
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Grid>
-                  <Grid xs={6}>
-                    <Box
-                      sx={(theme) => ({
-                        p: 2,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        height: "100%",
-                        bgcolor:
-                          theme.palette.mode === "light"
-                            ? "background.paper"
-                            : "transparent",
-                      })}
-                    >
-                      <Stack spacing={1}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <NotInterestedOutlinedIcon
-                            sx={{ color: "text.secondary" }}
-                          />
-                          <Typography variant="subtitle2">
-                            Label irrelevant
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Optionally mark papers as not relevant to refine the
-                          AI's understanding
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-
-              <Box>
-                <Button
-                  href="https://asreview.readthedocs.io/en/stable/lab/project_create.html#prior-knowledge"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Learn more
-                </Button>
-              </Box>
-            </Stack>
-          </Box>
-        </Popover>
-      </Card>
-    );
-  }
-
   return (
     <Card sx={{ position: "relative" }}>
-      <CardContent sx={{ py: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 0.5,
-              flex: 1,
-            }}
-          >
-            <Typography variant="h6" fontWeight="medium">
-              Prior Knowledge
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Prior knowledge helps to warm up and accelerate the AI
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={() => setIsConfiguring(false)}
-              sx={{ color: "text.secondary" }}
-            >
-              <TuneIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={handlePopoverOpen}>
-              <StyledLightBulb fontSize="small" />
-            </IconButton>
-          </Box>
-        </Box>
-      </CardContent>
+      <PriorCardHeader
+        isLoading={isLoading}
+        isConfiguring={isConfiguring}
+        setIsConfiguring={setIsConfiguring}
+        getPriorStatusText={getPriorStatusText}
+        handlePopoverOpen={handlePopoverOpen}
+      />
 
-      {/* <CardContent>
-        <FormControl>
-          <FormLabel id="prior-type-radio">
-            What knowledge so you want the AI to use in the beginning?
-          </FormLabel>
-          <RadioGroup
-            row
-            aria-labelledby="prior-type-radio"
-            name="prior-type"
-            defaultValue={priorType}
-            onChange={(event) => setPriorType(event.target.value)}
-          >
-            <FormControlLabel
-              value="records"
-              control={<Radio />}
-              label="Records"
-            />
-            <FormControlLabel
-              value="criteria"
-              control={<Radio />}
-              label="Review criteria"
-            />
-            <FormControlLabel
-              value="file"
-              control={<Radio />}
-              label="From file"
-            />
-          </RadioGroup>
-        </FormControl>
-      </CardContent> */}
-
-      {priorType === "records" && (
+      {isConfiguring && (
         <>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton variant="rectangular" height={56} />
-            ) : (
-              <>
-                {(data?.n_prior_inclusions === 0 ||
-                  data?.n_prior_exclusions === 0) && (
-                  <Typography>
-                    Search for one or more relevant records and label them
-                    relevant. It's also possible to label irrelevant records.
-                  </Typography>
+          {priorType === "records" && (
+            <>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton variant="rectangular" height={56} />
+                ) : (
+                  <>
+                    {(data?.n_prior_inclusions === 0 ||
+                      data?.n_prior_exclusions === 0) && (
+                      <Typography>
+                        Search for one or more relevant records and label them
+                        relevant. It's also possible to label not relevant
+                        records.
+                      </Typography>
+                    )}
+                  </>
                 )}
-                {data?.n_prior_inclusions !== 0 &&
-                  data?.n_prior_exclusions !== 0 && (
-                    <Typography>
-                      You added{" "}
-                      {`${data?.n_prior_inclusions} relevant records and ${data?.n_prior_exclusions} records that aren't relevant.`}
-                    </Typography>
-                  )}
-              </>
-            )}
-          </CardContent>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton variant="rectangular" width={100} height={36} />
-            ) : (
-              <>
-                <Button
-                  id={"add-prior-search"}
-                  onClick={() => setOpenPriorSearch(true)}
-                  variant="contained"
-                  disabled={!editable}
-                  sx={{ mr: 2 }}
-                >
-                  Search
-                </Button>
+              </CardContent>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton variant="rectangular" width={100} height={36} />
+                ) : (
+                  <>
+                    <Button
+                      id={"add-prior-search"}
+                      onClick={() => setOpenPriorSearch(true)}
+                      variant="contained"
+                      disabled={!editable}
+                      sx={{ mr: 2 }}
+                    >
+                      Search
+                    </Button>
 
-                <Button
-                  id={"add-prior-view"}
-                  onClick={toggleOpenPriorView}
-                  disabled={
-                    data?.n_prior_inclusions === 0 &&
-                    data?.n_prior_exclusions === 0
-                  }
-                >
-                  {openPriorView
-                    ? "Hide records"
-                    : "Show records (" + data?.n_prior + ")"}
-                </Button>
-              </>
-            )}
-          </CardContent>
+                    <Button
+                      id={"add-prior-view"}
+                      onClick={toggleOpenPriorView}
+                      disabled={
+                        data?.n_prior_inclusions === 0 &&
+                        data?.n_prior_exclusions === 0
+                      }
+                    >
+                      {openPriorView
+                        ? "Hide records"
+                        : "Show records (" + data?.n_prior + ")"}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </>
+          )}
+          {priorType === "records" && openPriorView && (
+            <>
+              <Divider />
+              <CardContent>
+                <LabelHistoryPrior
+                  project_id={project_id}
+                  mode={mode}
+                  n_prior_inclusions={data && data?.n_prior_inclusions}
+                  n_prior_exclusions={data && data?.n_prior_exclusions}
+                />
+              </CardContent>
+            </>
+          )}
         </>
       )}
-      {priorType === "records" && openPriorView && (
-        <>
-          <Divider />
-          <CardContent>
-            <LabelHistoryPrior
-              project_id={project_id}
-              mode={mode}
-              n_prior_inclusions={data && data?.n_prior_inclusions}
-              n_prior_exclusions={data && data?.n_prior_exclusions}
-            />
-          </CardContent>
-        </>
-      )}
-
-      {/* {(priorType === "criteria" || priorType === "file") && (
-        <CardContent>
-          <Alert severity="info">
-            Coming soon! Keep an eye on our website and socials.
-          </Alert>
-        </CardContent>
-      )} */}
 
       <AddPriorKnowledge open={openPriorSearch} onClose={onClosePriorSearch} />
 
-      <Popover
-        open={Boolean(anchorEl)}
+      <InfoPopover
         anchorEl={anchorEl}
-        onClose={handlePopoverClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
-        }}
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            maxWidth: 350,
-          },
-        }}
-      >
-        <Box
-          sx={(theme) => ({
-            p: 3,
-            maxHeight: "80vh",
-            overflow: "auto",
-            "&::-webkit-scrollbar": {
-              width: "8px",
-              background: "transparent",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              background: (theme) => theme.palette.grey[300],
-              borderRadius: "4px",
-              "&:hover": {
-                background: (theme) => theme.palette.grey[400],
-              },
-            },
-            "&::-webkit-scrollbar-track": {
-              background: "transparent",
-              borderRadius: "4px",
-            },
-            scrollbarWidth: "thin",
-            scrollbarColor: (theme) => `${theme.palette.grey[300]} transparent`,
-          })}
-        >
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Prior Knowledge Explained
-              </Typography>
-              <Typography variant="body2" align="justify">
-                Prior knowledge helps the AI understand your research criteria
-                from the start, making the learning process more efficient.
-              </Typography>
-            </Box>
-
-            <Divider />
-
-            <Box>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                How to Add Prior Knowledge
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid xs={6}>
-                  <Box
-                    sx={(theme) => ({
-                      p: 2,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 2,
-                      height: "100%",
-                      bgcolor:
-                        theme.palette.mode === "light"
-                          ? "background.paper"
-                          : "transparent",
-                    })}
-                  >
-                    <Stack spacing={1}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <SearchIcon sx={{ color: "text.secondary" }} />
-                        <Typography variant="subtitle2">
-                          Search & Label
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Search for known relevant papers and label them to train
-                        the AI
-                      </Typography>
-                    </Stack>
-                  </Box>
-                </Grid>
-                <Grid xs={6}>
-                  <Box
-                    sx={(theme) => ({
-                      p: 2,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 2,
-                      height: "100%",
-                      bgcolor:
-                        theme.palette.mode === "light"
-                          ? "background.paper"
-                          : "transparent",
-                    })}
-                  >
-                    <Stack spacing={1}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <LibraryAddOutlinedIcon
-                          sx={{ color: "text.secondary" }}
-                        />
-                        <Typography variant="subtitle2">
-                          Label relevant
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Mark papers as relevant that match your research
-                        criteria
-                      </Typography>
-                    </Stack>
-                  </Box>
-                </Grid>
-                <Grid xs={6}>
-                  <Box
-                    sx={(theme) => ({
-                      p: 2,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 2,
-                      height: "100%",
-                      bgcolor:
-                        theme.palette.mode === "light"
-                          ? "background.paper"
-                          : "transparent",
-                    })}
-                  >
-                    <Stack spacing={1}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <NotInterestedOutlinedIcon
-                          sx={{ color: "text.secondary" }}
-                        />
-                        <Typography variant="subtitle2">
-                          Label irrelevant
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Optionally mark papers as not relevant to refine the
-                        AI's understanding
-                      </Typography>
-                    </Stack>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-
-            <Box>
-              <Button
-                href="https://asreview.readthedocs.io/en/stable/lab/project_create.html#prior-knowledge"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Learn more
-              </Button>
-            </Box>
-          </Stack>
-        </Box>
-      </Popover>
+        handlePopoverClose={handlePopoverClose}
+      />
     </Card>
   );
 };
