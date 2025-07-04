@@ -32,6 +32,7 @@ import { Add } from "@mui/icons-material";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import StyleIcon from "@mui/icons-material/Style";
+import TuneIcon from "@mui/icons-material/Tune";
 import Grid from "@mui/material/Grid2";
 import { StyledLightBulb } from "StyledComponents/StyledLightBulb";
 import { TypographySubtitle1Medium } from "StyledComponents/StyledTypography";
@@ -492,6 +493,7 @@ const Group = ({ project_id, group }) => {
 
 const TagCard = () => {
   const project_id = useContext(ProjectContext);
+  const [isConfiguring, setIsConfiguring] = React.useState(false);
   const [dialogOpen, toggleDialogOpen] = useToggle();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -503,22 +505,142 @@ const TagCard = () => {
     },
   );
 
-  return (
-    <Card>
-      <LoadingCardHeader
-        title="Labeling tags"
-        subheader="Tags and tag groups are used to label records with additional information"
-        isLoading={isLoading}
-        action={
-          <IconButton
-            onClick={(event) => {
-              setAnchorEl(event.currentTarget);
+  const getTagGroupChips = () => {
+    if (isLoading || !data || data.length === 0) return null;
+
+    return data
+      .slice(0, 3)
+      .map((group, index) => (
+        <Chip key={index} label={group.label} size="small" sx={{ mr: 0.5 }} />
+      ));
+  };
+
+  const getTagStatusText = () => {
+    if (isLoading) return "Loading...";
+    if (!data || data.length === 0) return "None";
+
+    const totalTags = data.reduce((sum, group) => sum + group.values.length, 0);
+    return `${data.length} group${data.length > 1 ? "s" : ""}, ${totalTags} tag${totalTags > 1 ? "s" : ""}`;
+  };
+
+  if (!isConfiguring) {
+    return (
+      <Card sx={{ position: "relative" }}>
+        <CardContent sx={{ py: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            <StyledLightBulb />
-          </IconButton>
-        }
-      />
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                flex: 1,
+              }}
+            >
+              <Typography variant="h6" fontWeight="medium">
+                Labeling Tags
+              </Typography>
+              {isLoading ? (
+                <Skeleton width={120} height={20} />
+              ) : (
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}
+                >
+                  {getTagGroupChips()}
+                  {!data || data.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      None
+                    </Typography>
+                  ) : (
+                    data.length > 3 && (
+                      <Typography variant="body2" color="text.secondary">
+                        +{data.length - 3} more
+                      </Typography>
+                    )
+                  )}
+                </Box>
+              )}
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => setIsConfiguring(true)}
+                sx={{ color: "text.secondary" }}
+              >
+                <TuneIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  setAnchorEl(event.currentTarget);
+                }}
+              >
+                <StyledLightBulb fontSize="small" />
+              </IconButton>
+            </Box>
+          </Box>
+        </CardContent>
+
+        <InfoPopover
+          anchorEl={anchorEl}
+          handlePopoverClose={() => {
+            setAnchorEl(null);
+          }}
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent sx={{ py: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.5,
+              flex: 1,
+            }}
+          >
+            <Typography variant="h6" fontWeight="medium">
+              Labeling Tags
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Tags and tag groups are used to label records with additional
+              information
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={() => setIsConfiguring(false)}
+              sx={{ color: "text.secondary" }}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={(event) => {
+                setAnchorEl(event.currentTarget);
+              }}
+            >
+              <StyledLightBulb fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+      </CardContent>
 
       <InfoPopover
         anchorEl={anchorEl}

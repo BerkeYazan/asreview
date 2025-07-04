@@ -102,7 +102,6 @@ const SetupDialog = ({ project_id, mode, open, onClose }) => {
   const fullScreen = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
   // state management
-  const [showSettings, setShowSettings] = React.useState(false);
   const [feedbackBar, setFeedbackBar] = React.useState(null);
   const [simulationStarted, setSimulationStarted] = React.useState(false);
 
@@ -134,10 +133,11 @@ const SetupDialog = ({ project_id, mode, open, onClose }) => {
         open={open}
         fullScreen={fullScreen}
         fullWidth
-        maxWidth="md"
+        maxWidth={false}
         PaperProps={{
           sx: {
-            height: !fullScreen ? "calc(100% - 64px)" : "100%",
+            maxWidth: !fullScreen ? "1000px" : "100%",
+            height: !fullScreen ? "calc(100% - 48px)" : "100%",
             bgcolor: "background.default",
           },
         }}
@@ -152,8 +152,6 @@ const SetupDialog = ({ project_id, mode, open, onClose }) => {
                 : `Your project has been saved as draft`,
             );
             setSimulationStarted(false);
-
-            setShowSettings(false);
           },
         }}
         closeAfterTransition={false}
@@ -180,35 +178,22 @@ const SetupDialog = ({ project_id, mode, open, onClose }) => {
                 </>
               ) : (
                 <>
-                  <Collapse in={!showSettings}>
-                    <Box sx={{ mt: 3 }}>
-                      <DatasetCard
-                        project_id={data?.id}
-                        onResetDataset={onClose}
-                        hideLabeledInfo={false}
-                      />
-                    </Box>
-                  </Collapse>
-
-                  <Box sx={{ textAlign: "center", my: 2 }}>
-                    <Button onClick={() => setShowSettings(!showSettings)}>
-                      {showSettings ? "Show dataset" : "Show options"}
-                    </Button>
+                  <Box sx={{ mt: 3 }}>
+                    <DatasetCard
+                      project_id={data?.id}
+                      onResetDataset={onClose}
+                      hideLabeledInfo={false}
+                    />
                   </Box>
-                  <Collapse in={showSettings} mountOnEnter>
-                    <Box sx={{ mb: 3 }}>
-                      <TagCard
-                        project_id={data?.id}
-                        mobileScreen={fullScreen}
-                      />
-                    </Box>
-                    <Box sx={{ my: 3 }}>
-                      <ModelCard mode={mode} />
-                    </Box>
-                    <Box sx={{ my: 3 }}>
-                      <PriorCard mode={mode} />
-                    </Box>
-                  </Collapse>
+                  <Box sx={{ my: 3 }}>
+                    <PriorCard mode={mode} />
+                  </Box>
+                  <Box sx={{ my: 3 }}>
+                    <TagCard project_id={data?.id} mobileScreen={fullScreen} />
+                  </Box>
+                  <Box sx={{ my: 3 }}>
+                    <ModelCard mode={mode} />
+                  </Box>
                 </>
               )}
             </DialogContent>

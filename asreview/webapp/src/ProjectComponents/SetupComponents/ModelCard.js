@@ -5,12 +5,14 @@ import LanguageIcon from "@mui/icons-material/Language";
 import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import SearchIcon from "@mui/icons-material/Search";
+import TuneIcon from "@mui/icons-material/Tune";
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
+  Chip,
   Divider,
   FormControl,
   FormHelperText,
@@ -88,6 +90,7 @@ const ModelComponentSelect = ({
 const ModelCard = ({ mode = null, trainNewModel = false, editable = true }) => {
   const project_id = useContext(ProjectContext);
   const queryClient = useQueryClient();
+  const [isConfiguring, setIsConfiguring] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -166,42 +169,477 @@ const ModelCard = ({ mode = null, trainNewModel = false, editable = true }) => {
     setAnchorEl(null);
   };
 
+  const getModelDisplayName = () => {
+    if (isLoading || !modelConfig) return "Loading...";
+
+    if (modelConfig.name === "custom") {
+      return "Custom";
+    }
+
+    if (learnerOptions?.learners) {
+      const learner = learnerOptions.learners.find(
+        (l) => l.name === modelConfig.name,
+      );
+      if (learner) {
+        return learner.label;
+      }
+    }
+
+    return modelConfig.name || "None";
+  };
+
+  if (!isConfiguring) {
+    return (
+      <Card sx={{ position: "relative" }}>
+        <CardContent sx={{ py: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                flex: 1,
+              }}
+            >
+              <Typography variant="h6" fontWeight="medium">
+                AI Model
+              </Typography>
+              {isLoading ? (
+                <Skeleton width={120} height={20} />
+              ) : (
+                <Chip
+                  label={getModelDisplayName()}
+                  size="small"
+                  color={
+                    modelConfig?.name === "custom" ? "secondary" : "default"
+                  }
+                  sx={{ width: "fit-content", mt: 1 }}
+                />
+              )}
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => setIsConfiguring(true)}
+                sx={{ color: "text.secondary" }}
+              >
+                <TuneIcon fontSize="small" />
+              </IconButton>
+              <IconButton size="small" onClick={handlePopoverOpen}>
+                <StyledLightBulb fontSize="small" />
+              </IconButton>
+            </Box>
+          </Box>
+        </CardContent>
+
+        <Popover
+          open={Boolean(anchorEl)}
+          anchorEl={anchorEl}
+          onClose={handlePopoverClose}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              maxWidth: 480,
+            },
+          }}
+        >
+          <Box
+            sx={(theme) => ({
+              p: 3,
+              maxHeight: "80vh",
+              overflow: "auto",
+              "&::-webkit-scrollbar": {
+                width: "8px",
+                background: "transparent",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                background: (theme) => theme.palette.grey[300],
+                borderRadius: "4px",
+                "&:hover": {
+                  background: (theme) => theme.palette.grey[400],
+                },
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "transparent",
+                borderRadius: "4px",
+              },
+              scrollbarWidth: "thin",
+              scrollbarColor: (theme) =>
+                `${theme.palette.grey[300]} transparent`,
+            })}
+          >
+            <Stack spacing={3}>
+              <Box>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  AI Models Explained
+                </Typography>
+                <Typography variant="body2" align="justify">
+                  AI models learn from your decisions and help you identify
+                  relevant records and accelerate your review process.
+                </Typography>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  sx={{ mb: 2 }}
+                >
+                  Model Types
+                </Typography>
+                <Stack spacing={2}>
+                  <Box
+                    sx={(theme) => ({
+                      p: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 2,
+                      bgcolor:
+                        theme.palette.mode === "light"
+                          ? "background.paper"
+                          : "transparent",
+                    })}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Box
+                        sx={{
+                          bgcolor: "background.paper",
+                          borderRadius: "50%",
+                          p: 1,
+                          display: "flex",
+                        }}
+                      >
+                        <BoltIcon sx={{ color: "text.secondary" }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2">Ultra</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Fast & efficient for most reviews
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          Quick • Accurate
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+
+                  <Box
+                    sx={(theme) => ({
+                      p: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 2,
+                      bgcolor:
+                        theme.palette.mode === "light"
+                          ? "background.paper"
+                          : "transparent",
+                    })}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Box
+                        sx={{
+                          bgcolor: "background.paper",
+                          borderRadius: "50%",
+                          p: 1,
+                          display: "flex",
+                        }}
+                      >
+                        <LanguageIcon sx={{ color: "text.secondary" }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2">
+                          Language Agnostic
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Optimized for multilingual content
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          Multilingual • Flexible
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+
+                  <Box
+                    sx={(theme) => ({
+                      p: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 2,
+                      bgcolor:
+                        theme.palette.mode === "light"
+                          ? "background.paper"
+                          : "transparent",
+                    })}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Box
+                        sx={{
+                          bgcolor: "background.paper",
+                          borderRadius: "50%",
+                          p: 1,
+                          display: "flex",
+                        }}
+                      >
+                        <PrecisionManufacturingIcon
+                          sx={{ color: "text.secondary" }}
+                        />
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2">Heavy</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Advanced models for complex reviews
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          Powerful • Precise
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  sx={{ mb: 2 }}
+                >
+                  Custom Model Components
+                </Typography>
+                <Grid container spacing={2} columns={2}>
+                  <Grid size={1}>
+                    <Box
+                      sx={(theme) => ({
+                        p: 2,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        height: "100%",
+                        bgcolor:
+                          theme.palette.mode === "light"
+                            ? "background.paper"
+                            : "transparent",
+                      })}
+                    >
+                      <Stack spacing={1}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <SearchIcon sx={{ color: "text.secondary" }} />
+                          <Typography variant="subtitle2">Querier</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Selects which records to show you next, prioritizing
+                          potentially relevant ones
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                  <Grid size={1}>
+                    <Box
+                      sx={(theme) => ({
+                        p: 2,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        height: "100%",
+                        bgcolor:
+                          theme.palette.mode === "light"
+                            ? "background.paper"
+                            : "transparent",
+                      })}
+                    >
+                      <Stack spacing={1}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <ExtractIcon sx={{ color: "text.secondary" }} />
+                          <Typography variant="subtitle2">
+                            Feature Extractor
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Converts text into numerical features that the AI can
+                          understand
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                  <Grid size={1}>
+                    <Box
+                      sx={(theme) => ({
+                        p: 2,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        height: "100%",
+                        bgcolor:
+                          theme.palette.mode === "light"
+                            ? "background.paper"
+                            : "transparent",
+                      })}
+                    >
+                      <Stack spacing={1}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <PsychologyIcon sx={{ color: "text.secondary" }} />
+                          <Typography variant="subtitle2">
+                            Classifier
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Makes predictions about relevance based on your
+                          decisions
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                  <Grid size={1}>
+                    <Box
+                      sx={(theme) => ({
+                        p: 2,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        height: "100%",
+                        bgcolor:
+                          theme.palette.mode === "light"
+                            ? "background.paper"
+                            : "transparent",
+                      })}
+                    >
+                      <Stack spacing={1}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <BalanceIcon sx={{ color: "text.secondary" }} />
+                          <Typography variant="subtitle2">Balancer</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Handles imbalanced data to improve learning accuracy
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  sx={{ mb: 2 }}
+                >
+                  Tips for Best Results
+                </Typography>
+                <Stack spacing={2}>
+                  <Typography variant="body2">
+                    • Start with <strong>Ultra</strong> model for most reviews -
+                    it's fast and effective
+                  </Typography>
+                  <Typography variant="body2">
+                    • Try <strong>Heavy</strong> models for large, complex
+                    systematic reviews
+                  </Typography>
+                </Stack>
+              </Box>
+
+              <Box>
+                <Button
+                  href="https://asreview.readthedocs.io/en/stable/lab/models.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Learn more
+                </Button>
+              </Box>
+            </Stack>
+          </Box>
+        </Popover>
+      </Card>
+    );
+  }
+
   return (
     <Card sx={{ position: "relative" }}>
-      <LoadingCardHeader
-        isLoading={isLoading}
-        title="AI"
-        subheader={
-          projectModes.SIMULATION === mode
-            ? "Select or compose an AI to simulate the performance of your review process"
-            : "Select or compose an AI to accelerate your review process"
-        }
-      />
-
-      <Box
-        sx={{
-          position: "absolute",
-          top: 16,
-          right: 16,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
+      <CardContent sx={{ py: 2 }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            minWidth: 24,
-            height: 24,
-            justifyContent: "center",
+            justifyContent: "space-between",
           }}
-        ></Box>
-
-        <IconButton size="small" onClick={handlePopoverOpen}>
-          <StyledLightBulb fontSize="small" />
-        </IconButton>
-      </Box>
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.5,
+              flex: 1,
+            }}
+          >
+            <Typography variant="h6" fontWeight="medium">
+              AI Model
+            </Typography>
+            {isLoading ? (
+              <Skeleton width={120} height={20} />
+            ) : (
+              <Chip
+                label={getModelDisplayName()}
+                size="small"
+                color={modelConfig?.name === "custom" ? "secondary" : "default"}
+                sx={{ width: "fit-content", mt: 1 }}
+              />
+            )}
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={() => setIsConfiguring(false)}
+              sx={{ color: "text.secondary" }}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={handlePopoverOpen}>
+              <StyledLightBulb fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+      </CardContent>
 
       <CardContent>
         {isLoading ? (
