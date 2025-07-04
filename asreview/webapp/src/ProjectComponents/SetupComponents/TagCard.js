@@ -30,7 +30,6 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Add } from "@mui/icons-material";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import StyleIcon from "@mui/icons-material/Style";
 import TuneIcon from "@mui/icons-material/Tune";
 import Grid from "@mui/material/Grid2";
 import { StyledLightBulb } from "StyledComponents/StyledLightBulb";
@@ -94,8 +93,8 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
             </Typography>
             <Typography variant="body2" align="justify">
               Tags allow you to categorize records based on specific criteria,
-              such as reasons for inclusion/exclusion, study characteristics, or
-              quality assessment.
+              such as inclusion criteria, study characteristics, or quality
+              assessment.
             </Typography>
             <Alert severity="info" sx={{ mt: 2 }}>
               Using tags consistently throughout your screening will make your
@@ -158,31 +157,6 @@ const InfoPopover = ({ anchorEl, handlePopoverClose }) => {
                     <Typography variant="body2" color="text.secondary">
                       Add specific labels like "Wrong Population" or "Randomized
                       Controlled Trial"
-                    </Typography>
-                  </Stack>
-                </Box>
-              </Grid>
-              <Grid xs={6}>
-                <Box
-                  sx={(theme) => ({
-                    p: 2,
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 2,
-                    height: "100%",
-                    bgcolor:
-                      theme.palette.mode === "light"
-                        ? "background.paper"
-                        : "transparent",
-                  })}
-                >
-                  <Stack spacing={1}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <StyleIcon sx={{ color: "text.secondary" }} />
-                      <Typography variant="subtitle2">Organization</Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Group related concepts together for better overview
                     </Typography>
                   </Stack>
                 </Box>
@@ -491,11 +465,11 @@ const Group = ({ project_id, group }) => {
 };
 
 const TagCardHeader = ({
+  isLoading,
   isConfiguring,
   setIsConfiguring,
-  isLoading,
-  data,
   handlePopoverOpen,
+  data,
   getTagGroupChips,
 }) => {
   return (
@@ -589,54 +563,43 @@ const TagCard = () => {
   return (
     <Card>
       <TagCardHeader
+        isLoading={isLoading}
         isConfiguring={isConfiguring}
         setIsConfiguring={setIsConfiguring}
-        isLoading={isLoading}
-        data={data}
         handlePopoverOpen={handlePopoverOpen}
+        data={data}
         getTagGroupChips={getTagGroupChips}
       />
 
       {isConfiguring && (
-        <>
-          <CardContent>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Tags and tag groups are used to label records with additional
-              information
-            </Typography>
-            {isLoading ? (
-              <Skeleton variant="rectangular" height={56} />
-            ) : (
-              <>
-                {data.length === 0 && (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Your tags will appear here
-                  </Alert>
-                )}
-                {data.map((c, index) => (
-                  <Group key={index} group={c} project_id={project_id} />
-                ))}
-              </>
-            )}
-          </CardContent>
-
-          <CardContent>
-            {isLoading ? (
-              <Skeleton variant="rectangular" width={100} height={36} />
-            ) : (
-              <>
-                <MutateGroupDialog
-                  project_id={project_id}
-                  open={dialogOpen}
-                  onClose={toggleDialogOpen}
-                />
-                <Button onClick={toggleDialogOpen} variant="contained">
-                  Add tags
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton variant="rectangular" height={56} />
+          ) : (
+            data.map((c, index) => (
+              <Group key={index} group={c} project_id={project_id} />
+            ))
+          )}
+          {isLoading ? (
+            <Skeleton
+              variant="rectangular"
+              width={100}
+              height={36}
+              sx={{ mt: data?.length > 0 ? 2 : 0 }}
+            />
+          ) : (
+            <Box sx={{ mt: data?.length > 0 ? 2 : 0 }}>
+              <MutateGroupDialog
+                project_id={project_id}
+                open={dialogOpen}
+                onClose={toggleDialogOpen}
+              />
+              <Button onClick={toggleDialogOpen} variant="contained">
+                Add tags
+              </Button>
+            </Box>
+          )}
+        </CardContent>
       )}
 
       <InfoPopover
