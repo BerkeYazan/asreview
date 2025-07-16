@@ -1,9 +1,16 @@
-import { Button, Stack, Typography, useMediaQuery } from "@mui/material";
+import {
+  Alert,
+  Button,
+  Container,
+  Stack,
+  Typography,
+  useMediaQuery,
+  Box,
+} from "@mui/material";
 import * as React from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
 
-import { Container } from "@mui/material";
 import { RecordCard } from ".";
 
 import { ProjectAPI } from "api";
@@ -14,13 +21,13 @@ import FinishSetup from "./ReviewPageTraining";
 import { useReviewSettings } from "context/ReviewSettingsContext";
 import StoppingReachedDialog from "./StoppingReachedDialog";
 import { projectStatuses } from "globals.js";
-import { Alert } from "@mui/material";
 
 const ReviewPage = () => {
   let { project_id } = useParams();
   const queryClient = useQueryClient();
 
-  const { fontSize, modelLogLevel, orientation } = useReviewSettings();
+  const { cardWidth, fontSize, modelLogLevel, orientation } =
+    useReviewSettings();
 
   const [tagValues, setTagValues] = React.useState({});
 
@@ -98,7 +105,7 @@ const ReviewPage = () => {
   return (
     <Container
       aria-label="review page"
-      maxWidth="md"
+      maxWidth={false}
       sx={(theme) => ({
         mb: 6,
         [theme.breakpoints.down("md")]: {
@@ -107,86 +114,92 @@ const ReviewPage = () => {
         },
       })}
     >
-      {isSuccess && (
-        <>
-          {data?.status === "setup" && (
-            <FinishSetup project_id={project_id} refetch={refetch} />
-          )}
+      <Box sx={{ width: `${cardWidth}%`, margin: "0 auto" }}>
+        {isSuccess && (
+          <>
+            {data?.status === "setup" && (
+              <FinishSetup project_id={project_id} refetch={refetch} />
+            )}
 
-          {data?.status === "review" && data?.result !== null && (
-            <RecordCard
-              key={
-                "record-card-" +
-                project_id +
-                "-" +
-                data?.result?.record_id +
-                "-" +
-                JSON.stringify(data?.result?.tags_form)
-              }
+            {data?.status === "review" && data?.result !== null && (
+              <RecordCard
+                key={
+                  "record-card-" +
+                  project_id +
+                  "-" +
+                  data?.result?.record_id +
+                  "-" +
+                  JSON.stringify(data?.result?.tags_form)
+                }
+                project_id={project_id}
+                record={data?.result}
+                afterDecision={afterDecision}
+                fontSize={fontSize}
+                showBorder={showBorder}
+                modelLogLevel={modelLogLevel}
+                tagValues={tagValues}
+                setTagValues={setTagValues}
+                collapseAbstract={false}
+                hotkeys={true}
+                landscape={orientation === "landscape" && !landscapeDisabled}
+              />
+            )}
+            {data?.status === "review" && data?.result === null && (
+              <Stack spacing={3} sx={{ alignItems: "center" }}>
+                <img
+                  src={ElasFinished}
+                  alt="Celebration for reviewing all records"
+                  width="400"
+                />
+                <Typography variant="h5">
+                  Wow! You have reviewed all the records.
+                </Typography>
+              </Stack>
+            )}
+            <StoppingReachedDialog
+              open={showStoppingDialog}
+              onClose={handleCloseDialog}
               project_id={project_id}
-              record={data?.result}
-              afterDecision={afterDecision}
-              fontSize={fontSize}
-              showBorder={showBorder}
-              modelLogLevel={modelLogLevel}
-              tagValues={tagValues}
-              setTagValues={setTagValues}
-              collapseAbstract={false}
-              hotkeys={true}
-              landscape={orientation === "landscape" && !landscapeDisabled}
             />
-          )}
-          {data?.status === "review" && data?.result === null && (
-            <Stack spacing={3} sx={{ alignItems: "center" }}>
-              <img
-                src={ElasFinished}
-                alt="Celebration for reviewing all records"
-                width="400"
-              />
-              <Typography variant="h5">
-                Wow! You have reviewed all the records.
-              </Typography>
-            </Stack>
-          )}
-          <StoppingReachedDialog
-            open={showStoppingDialog}
-            onClose={handleCloseDialog}
-            project_id={project_id}
-          />
-          {data?.status === "finished" && (
-            <Stack spacing={1} sx={{ alignItems: "center" }}>
-              <img
-                src={ElasFinished}
-                alt="Celebration for finished project"
-                width="400"
-              />
-              <Typography variant="h5">
-                Congratulations! You have finished this project.
-              </Typography>
-              <Typography>
-                You have stopped reviewing and marked this project as finished.
-                You can change this on the project dashboard.
-              </Typography>
-            </Stack>
-          )}
-        </>
-      )}
+            {data?.status === "finished" && (
+              <Stack spacing={1} sx={{ alignItems: "center" }}>
+                <img
+                  src={ElasFinished}
+                  alt="Celebration for finished project"
+                  width="400"
+                />
+                <Typography variant="h5">
+                  Congratulations! You have finished this project.
+                </Typography>
+                <Typography>
+                  You have stopped reviewing and marked this project as
+                  finished. You can change this on the project dashboard.
+                </Typography>
+              </Stack>
+            )}
+          </>
+        )}
 
-      {isError && (
-        <Alert severity="error" sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            ASReview LAB failed to load a new record
-          </Typography>
-          {error?.message && (
-            <Typography variant="body1" gutterBottom>
-              {error.message}
+        {isError && (
+          <Alert severity="error" sx={{ mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              ASReview LAB failed to load a new record
             </Typography>
-          )}
-          <Button variant="contained" onClick={() => refetch()} sx={{ mt: 2 }}>
-            Try to load again
-          </Button>
-        </Alert>
-      )}
+            {error?.message && (
+              <Typography variant="body1" gutterBottom>
+                {error.message}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              onClick={() => refetch()}
+              sx={{ mt: 2 }}
+            >
+              Try to load again
+            </Button>
+          </Alert>
+        )}
+      </Box>
     </Container>
   );
 };

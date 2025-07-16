@@ -4,6 +4,7 @@ const storageNames = {
   fontSize: "fontSize",
   modelLogLevel: "modelLogLevel",
   orientation: "orientation",
+  cardWidth: "cardWidth",
 };
 
 const orientationOptions = ["portrait", "landscape"];
@@ -33,10 +34,14 @@ const initialReviewSettings = () => {
     ? window.localStorage.getItem(storageNames.orientation)
     : "portrait";
 
+  let cardWidth = parseInt(window.localStorage.getItem(storageNames.cardWidth));
+  cardWidth = cardWidth >= 50 && cardWidth <= 100 ? cardWidth : 75;
+
   return {
     [storageNames.fontSize]: localFontSize,
     [storageNames.modelLogLevel]: localModelLogLevel,
     [storageNames.orientation]: orientation,
+    [storageNames.cardWidth]: cardWidth,
   };
 };
 
@@ -79,6 +84,12 @@ function ReviewSettingsReducer(reviewSettings, action) {
     case storageNames.orientation: {
       window.localStorage.setItem(storageNames.orientation, action.orientation);
       return { ...reviewSettings, orientation: action.orientation };
+    }
+
+    // Add a case for the cardWidth action
+    case storageNames.cardWidth: {
+      window.localStorage.setItem(storageNames.cardWidth, action.cardWidth);
+      return { ...reviewSettings, cardWidth: action.cardWidth };
     }
 
     // Add a default case that throws an error

@@ -15,7 +15,10 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-
+import {
+  useReviewSettings,
+  useReviewSettingsDispatch,
+} from "context/ReviewSettingsContext";
 import { StyledIconButton } from "StyledComponents/StyledButton";
 import { useToggle } from "hooks/useToggle";
 import { DOIIcon } from "icons";
@@ -157,6 +160,21 @@ const RecordCardContent = ({ record, fontSize, collapseAbstract }) => {
   );
 };
 
+const ResizeHandle = ({ onMouseDown, side }) => (
+  <Box
+    onMouseDown={(e) => onMouseDown(e, side)}
+    sx={{
+      position: "absolute",
+      [side]: "-10px",
+      top: 0,
+      bottom: 0,
+      width: "20px",
+      cursor: "col-resize",
+      zIndex: 1,
+    }}
+  />
+);
+
 const RecordCard = ({
   project_id,
   record,
@@ -174,9 +192,50 @@ const RecordCard = ({
   changeDecision = true,
 }) => {
   const [open, setOpen] = React.useState(true);
+  const dispatch = useReviewSettingsDispatch();
+  const { cardWidth } = useReviewSettings();
+  const [isDragging, setIsDragging] = React.useState(false);
+  const dragStartData = React.useRef(null);
+
+  const handleMouseDown = (e, handle) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartData.current = {
+      startX: e.clientX,
+      startWidth: cardWidth,
+      handle: handle,
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!dragStartData.current) return;
+    const deltaX = e.clientX - dragStartData.current.startX;
+    let deltaWidth = (deltaX / window.innerWidth) * 100;
+
+    let newWidth;
+    if (dragStartData.current.handle === "left") {
+      newWidth = dragStartData.current.startWidth - deltaWidth * 2;
+    } else {
+      newWidth = dragStartData.current.startWidth + deltaWidth * 2;
+    }
+
+    if (newWidth >= 50 && newWidth <= 100) {
+      dispatch({ type: "cardWidth", cardWidth: newWidth });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    dragStartData.current = null;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
 
   const styledRepoCard = (
-    <Box>
+    <Box sx={{ position: "relative" }}>
+      <ResizeHandle onMouseDown={handleMouseDown} side="left" />
       <RecordCardModelTraining
         key={"record-card-model-" + project_id + "-" + record?.record_id}
         record={record}
@@ -188,6 +247,7 @@ const RecordCard = ({
         sx={(theme) => ({
           bgcolor: theme.palette.background.record,
           borderRadius: !showBorder ? 0 : undefined,
+          userSelect: isDragging ? "none" : "auto",
         })}
       >
         <Grid
@@ -234,6 +294,7 @@ const RecordCard = ({
           </Grid>
         </Grid>
       </Card>
+      <ResizeHandle onMouseDown={handleMouseDown} side="right" />
     </Box>
   );
 
