@@ -28,9 +28,7 @@ class ASReviewSidebar {
       this.recordData = await chrome.runtime.sendMessage({
         type: "GET_CURRENT_RECORD",
       });
-    } catch (error) {
-      console.log("ASReview Extension Content: No background connection");
-    }
+    } catch (error) {}
 
     const messageHandler = (request) => this.handleMessage(request);
     chrome.runtime.onMessage.addListener(messageHandler);
@@ -108,8 +106,6 @@ class ASReviewSidebar {
     const launcher = document.getElementById("asreview-launcher");
     if (sidebar) sidebar.remove();
     if (launcher) launcher.remove();
-
-    console.log("ASReview Extension: Cleaned up");
   }
 
   announceToWebapp() {
@@ -118,10 +114,6 @@ class ASReviewSidebar {
       new CustomEvent("asreview_extension_ready", {
         detail: { extensionId: extensionId },
       })
-    );
-    console.log(
-      "ASReview Extension: Announced to webapp with ID:",
-      extensionId
     );
   }
 
@@ -136,7 +128,6 @@ class ASReviewSidebar {
         if (this.recordData) {
           this.recordData.tagValues = request.data.tags;
           this.recordData.note = request.data.note;
-          console.log("ASReview Extension: Updated tags", request.data);
           this.updateUI();
         }
         break;
@@ -282,6 +273,15 @@ class ASReviewSidebar {
       existingSidebar.remove();
     }
 
+    const isASReviewSite =
+      window.location.hostname === "localhost" &&
+      window.location.port === "3000";
+
+    if (isASReviewSite) {
+      this.createWebappInfoPanel();
+      return;
+    }
+
     if (!this.recordData || !this.recordData.title) {
       this.createNoDataUI();
       return;
@@ -300,6 +300,36 @@ class ASReviewSidebar {
     });
   }
 
+  createWebappInfoPanel() {
+    const sidebar = document.createElement("div");
+    sidebar.id = "asreview-sidebar";
+    sidebar.className = this.isOpen ? "asreview-open" : "";
+
+    sidebar.innerHTML = `
+      <div class="asreview-content">
+        <div class="asreview-header">
+          <div class="header-content">
+            <h4>ASReview Full-Text Companion</h4>
+          </div>
+        </div>
+        <div class="main-content">
+          <div class="no-data-message">
+            <p style="text-align: left; font-size: 1.0rem; margin-bottom: 24px;">
+              This panel enables tagging and note-taking on external websites.
+            </p>
+            <ol>
+              <li>Keep this ASReview LAB page open in <b>Review</b> mode.</li>
+              <li>Navigate to the full-text of a record in a new browser tab.</li>
+              <li>The tagging interface will appear in the panel on that page.</li>
+              <li>All work will be synchronized with your project here.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(sidebar);
+  }
+
   createNoDataUI() {
     const sidebar = document.createElement("div");
     sidebar.id = "asreview-sidebar";
@@ -315,8 +345,8 @@ class ASReviewSidebar {
         <div class="main-content">
           <div class="no-data-message">
             <ol>
-              <li>Start ASReview LAB with <code>asreview lab</code> command</li>
-              <li>Open ASReview LAB and go to <strong>Review</strong> mode</li>
+              <li>In your terminal, run the <code>asreview lab</code> command to start ASReview LAB</li>
+              <li>Open <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer">ASReview LAB</a> and go to <strong>Review</strong> tab</li>
               <li>Tagging options for that record will appear in this panel</li>
               <li>Take ASReview with you while reading full-text records</li>
             </ol>
@@ -427,7 +457,6 @@ class ASReviewSidebar {
         window.getComputedStyle(checkbox).visibility === "hidden" ||
         window.getComputedStyle(checkbox).opacity === "0"
       ) {
-        console.log("ASReview Extension: Force-fixing hidden checkbox");
         checkbox.style.setProperty("display", "inline-block", "important");
         checkbox.style.setProperty("visibility", "visible", "important");
         checkbox.style.setProperty("opacity", "1", "important");
@@ -458,24 +487,12 @@ class ASReviewSidebar {
   }
 
   attachEventListeners() {
-    console.log("ASReview Extension Content: Attaching event listeners");
-
     const checkboxes = document.querySelectorAll(
       '#asreview-sidebar input[type="checkbox"], #asreview-sidebar .asreview-checkbox-input'
-    );
-    console.log(
-      "ASReview Extension Content: Found checkboxes",
-      checkboxes.length
     );
 
     checkboxes.forEach((checkbox) => {
       this.addEventListenerTracked(checkbox, "change", (e) => {
-        console.log(
-          "ASReview Extension Content: Checkbox changed",
-          e.target.checked,
-          e.target.dataset
-        );
-
         // Immediately remove focus to prevent blue highlight
         e.target.blur();
         const mainContent = document.querySelector(
@@ -499,9 +516,7 @@ class ASReviewSidebar {
 
     const saveNoteBtn = document.getElementById("save-note-btn");
     if (saveNoteBtn) {
-      console.log("ASReview Extension Content: Found save note button");
       this.addEventListenerTracked(saveNoteBtn, "click", () => {
-        console.log("ASReview Extension Content: Save note button clicked");
         this.saveNote();
       });
     }
@@ -536,12 +551,6 @@ class ASReviewSidebar {
     const noteInput = document.getElementById("note-input");
     if (noteInput) {
       const newNoteValue = this.recordData.note || "";
-      console.log(
-        "ASReview Extension Content: Updating note UI from",
-        noteInput.value,
-        "to",
-        newNoteValue
-      );
       noteInput.value = newNoteValue;
     }
 
@@ -552,16 +561,8 @@ class ASReviewSidebar {
   }
 
   async saveNote() {
-    console.log("ASReview Extension Content: saveNote called");
-
     const note = document.getElementById("note-input")?.value || "";
     const saveButton = document.getElementById("save-note-btn");
-
-    console.log("ASReview Extension Content: Note value:", note);
-    console.log(
-      "ASReview Extension Content: Previous note:",
-      this.recordData.note
-    );
 
     this.recordData.note = note;
     if (saveButton) {
@@ -576,15 +577,11 @@ class ASReviewSidebar {
         return;
       }
 
-      console.log("ASReview Extension Content: Sending note to background");
       const response = await chrome.runtime.sendMessage({
         type: "SAVE_TAGS",
         tags: this.recordData.tagValues,
         note: note,
       });
-
-      console.log("ASReview Extension Content: Note save response", response);
-      console.log("ASReview Extension: Note saved successfully");
 
       if (saveButton) {
         saveButton.innerHTML = "✓ Saved!";
@@ -606,8 +603,6 @@ class ASReviewSidebar {
   }
 
   async onTagChange() {
-    console.log("ASReview Extension Content: onTagChange called");
-
     let tagValuesCopy = structuredClone(this.recordData.tagValues);
 
     if (this.recordData.tagsForm) {
@@ -626,13 +621,6 @@ class ASReviewSidebar {
 
     const note = document.getElementById("note-input")?.value || "";
 
-    console.log("ASReview Extension Content: Updated tagValues", tagValuesCopy);
-    console.log("ASReview Extension Content: Note value:", note);
-    console.log(
-      "ASReview Extension Content: Previous note:",
-      this.recordData.note
-    );
-
     this.recordData.tagValues = tagValuesCopy;
     this.recordData.note = note;
     try {
@@ -643,15 +631,14 @@ class ASReviewSidebar {
         return;
       }
 
-      console.log("ASReview Extension Content: Sending SAVE_TAGS message");
       const response = await chrome.runtime.sendMessage({
         type: "SAVE_TAGS",
         tags: tagValuesCopy,
         note: note,
       });
-      console.log("ASReview Extension Content: Save response", response);
-
-      console.log("ASReview Extension: Tags saved successfully");
+      if (response && response.success === false) {
+        throw new Error(response.error || "Unknown error occurred");
+      }
     } catch (error) {
       if (error.message.includes("Extension context invalidated")) {
         console.warn(

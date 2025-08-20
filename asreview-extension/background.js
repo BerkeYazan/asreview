@@ -82,10 +82,6 @@ class ASReviewExtensionBackground {
       this.notifyWebapp();
     } catch (error) {
       if (retryCount < maxRetries && this._isRetryableError(error)) {
-        console.warn(
-          `Attempt ${retryCount + 1} failed, retrying...`,
-          error.message
-        );
         await this._delay(1000 * (retryCount + 1));
         return this.saveTagsToWebapp(tags, note, retryCount + 1);
       }
