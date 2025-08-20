@@ -1,9 +1,4 @@
-import {
-  Link as LinkIcon,
-  Close as CloseIcon,
-  Visibility as VisibilityIcon,
-  OpenInNew as OpenInNewIcon,
-} from "@mui/icons-material";
+import { Link as LinkIcon } from "@mui/icons-material";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
@@ -12,15 +7,11 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  InputAdornment,
   Collapse,
-  Dialog,
   Divider,
   Fade,
   Grid2 as Grid,
-  IconButton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -28,6 +19,7 @@ import React from "react";
 
 import { StyledIconButton } from "StyledComponents/StyledButton";
 import { useToggle } from "hooks/useToggle";
+import { DOIIcon } from "icons";
 import { RecordCardLabeler, RecordCardModelTraining } from ".";
 import { useQuery, useQueryClient } from "react-query";
 import { ProjectAPI } from "api";
@@ -69,7 +61,6 @@ const reconcileTagsWithSchema = (savedTags, currentSchema) => {
 function useExtensionListener(refetch, recordId) {
   React.useEffect(() => {
     const handleExtensionUpdate = () => {
-      console.log("RecordCard: Extension triggered update, refetching...");
       refetch();
     };
 
@@ -195,6 +186,18 @@ const RecordCardContent = ({
           </Typography>
           <Divider />
           <Stack direction="row" spacing={1}>
+            {!(record.doi === undefined || record.doi === null) && (
+              <Tooltip title="Open DOI">
+                <StyledIconButton
+                  className="record-card-icon"
+                  href={"https://doi.org/" + record.doi}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <DOIIcon />
+                </StyledIconButton>
+              </Tooltip>
+            )}
             {record.url && (
               <Tooltip title="Open URL">
                 <StyledIconButton
