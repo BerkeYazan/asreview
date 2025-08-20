@@ -45,7 +45,7 @@
         "*://*/*pdf*",
         "file://*.pdf",
         "file://*/*.pdf",
-        "chrome-extension://*/content/web/viewer.html*",
+
         "*://*/pdf/*",
         "*://*/*/pdf/*",
         "*://*/*.PDF",
