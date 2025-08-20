@@ -21,6 +21,7 @@ import "@fontsource/kanit/500.css";
 import "@fontsource/kanit/700.css";
 
 import * as serviceWorker from "./serviceWorker";
+import "./extension_listener";
 
 const queryClient = new QueryClient();
 

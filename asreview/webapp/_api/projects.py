@@ -35,6 +35,7 @@ from flask import redirect
 from flask import request
 from flask import Response
 from flask import send_file
+from flask_cors import CORS
 from flask_login import current_user
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -95,6 +96,7 @@ except importlib.metadata.PackageNotFoundError:
 
 
 bp = Blueprint("api", __name__, url_prefix="/api")
+CORS(bp, supports_credentials=True)
 
 UNPAYWALL_EMAIL = "asreview@openaccess.org"  # For the Unpaywall API, can be changed to any email address for tracking purposes
 
@@ -1575,6 +1577,43 @@ def api_label_record(project, record_id):  # noqa: F401
         return jsonify({"result": item})
 
 
+@bp.route("/projects/<project_id>/record/<int:record_id>/state", methods=["PUT"])
+@login_required
+@project_authorization
+def api_update_record_state(project, record_id):
+    """Update the state of a record (tags, note) without a final decision."""
+    try:
+        tags = json.loads(request.form.get("tags", "null"))
+        note = request.form.get("note", None)
+
+        user_id = (
+            current_user.id if current_app.config.get("AUTHENTICATION", True) else None
+        )
+
+        with open_state(project.project_path) as state:
+            # Check if there's an existing labeling decision
+            existing_data = state.get_results_record(record_id)
+            if not existing_data.empty:
+                if tags is not None:
+                    state.update(record_id, tags=tags, user_id=user_id)
+                if note is not None:
+                    state.update_note(record_id, note)
+            else:
+                # If no final label, adds a placeholder with no label
+                state.add_labeling_data(
+                    record_ids=[record_id], labels=[None], user_id=user_id
+                )
+                if tags is not None:
+                    state.update(record_id, tags=tags, user_id=user_id)
+                if note is not None:
+                    state.update_note(record_id, note)
+
+        return jsonify({"success": True})
+    except Exception as e:
+        logging.error(f"Error updating record state: {e}")
+        return jsonify({"message": "Failed to update record state."}), 500
+
+
 @bp.route("/projects/<project_id>/record/<record_id>/note", methods=["PUT"])
 @login_required
 @project_authorization
@@ -1628,6 +1667,38 @@ def api_get_record(project):  # noqa: F401
         pass
 
     return jsonify({"result": item, "status": "review"})
+
+
+@bp.route("/projects/<project_id>/record/<int:record_id>", methods=["GET"])
+@login_required
+@project_authorization
+def api_get_record_by_id(project, record_id):
+    """Get a single record by its ID, including its full state."""
+    try:
+        record_data = asdict(project.data_store.get_records(record_id))
+        if not record_data:
+            return jsonify({"message": "Record not found"}), 404
+
+        record_data["tags_form"] = read_tags_data(project)
+
+        with open_state(project.project_path) as state:
+            results = state.get_results_record(record_id)
+            if not results.empty:
+                state_data = results.iloc[0].to_dict()
+                state_data["label"] = (
+                    int(state_data["label"])
+                    if pd.notna(state_data["label"])
+                    else None
+                )
+                record_data["state"] = state_data
+            else:
+                record_data["state"] = None
+
+        return jsonify({"result": record_data})
+
+    except Exception as e:
+        logging.error(f"Error fetching record by ID: {e}")
+        return jsonify({"message": "Failed to fetch record data."}), 500
 
 
 @bp.route("/projects/<project_id>/delete", methods=["DELETE"])
