@@ -4,21 +4,21 @@ This extension connects ASReview LAB to publisher websites, allowing you to scre
 
 ### Prerequisites
 
-*   ASReview LAB (`pip install asreview`)
-*   A Chromium-based browser (Chrome, Edge, Brave).
+- ASReview LAB (`pip install asreview`)
+- A Chromium-based browser (Chrome, Edge, Brave).
 
 ---
 
 ### 1. Get the Code
 
-*   **Option A: Clone the Repository (Recommended)**
-    ```bash
-    git clone https://github.com/asreview/asreview.git
-    ```
-*   **Option B: Download ZIP**
-    *   Go to the [repository page](https://github.com/asreview/asreview).
-    *   Click `Code` -> `Download ZIP`.
-    *   Unzip the file.
+- **Option A: Clone the Repository (Recommended)**
+  ```bash
+  git clone https://github.com/asreview/asreview.git
+  ```
+- **Option B: Download ZIP**
+  - Go to the [repository page](https://github.com/asreview/asreview).
+  - Click `Code` -> `Download ZIP`.
+  - Unzip the file.
 
 The extension files are located in the `asreview-extension` folder.
 
@@ -33,6 +33,7 @@ The extension files are located in the `asreview-extension` folder.
 ### 3. Start ASReview LAB
 
 In your terminal, run:
+
 ```bash
 asreview lab
 ```
@@ -48,14 +49,16 @@ asreview lab
 
 ### Troubleshooting
 
-*   **Panel shows "No ASReview data":**
-    *   Ensure ASReview LAB is running.
-    *   Make sure you are on the **Review** screen in an active project.
+- **Panel shows "No ASReview data":**
 
-*   **Panel doesn't appear on a website:**
-    *   The website may not be supported yet.
-    *   Try refreshing the page.
+  - Ensure ASReview LAB is running.
+  - Make sure you are on the **Review** screen in an active project.
 
-*   **Tagging/Notes not syncing:**
-    *   Ensure the ASReview LAB backend is running and accessible.
-    *   Refresh the ASReview LAB tab in your browser.
+- **Panel doesn't appear on a website:**
+
+  - The website may not be supported yet.
+  - Try refreshing the page.
+
+- **Tagging/Notes not syncing:**
+  - Ensure the ASReview LAB backend is running and accessible.
+  - Refresh the ASReview LAB tab in your browser.
