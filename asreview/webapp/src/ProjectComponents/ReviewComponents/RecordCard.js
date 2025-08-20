@@ -164,59 +164,6 @@ const RecordCardContent = ({
   labelerProps,
 }) => {
   const [readMoreOpen, toggleReadMore] = useToggle();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [iframeLoading, setIframeLoading] = React.useState(true);
-  const [iframeSrc, setIframeSrc] = React.useState(null);
-
-  const handleOpenDialog = () => {
-    setIframeLoading(true);
-    setDialogOpen(true);
-    (async () => {
-      const fallbackUrl = record.url ? record.url : doiUrl;
-      setIframeSrc(fallbackUrl);
-      if (record.doi) {
-        const apiUrl = `${window.api_url}api/oa/get_url?doi=${encodeURIComponent(
-          record.doi,
-        )}`;
-        try {
-          const response = await fetch(apiUrl, {
-            method: "GET",
-            credentials: "include",
-          });
-          if (response.ok) {
-            const contentType = response.headers.get("content-type") || "";
-            if (contentType.includes("application/pdf")) {
-              setIframeSrc(response.url);
-            } else if (contentType.includes("application/json")) {
-              const data = await response.json();
-              if (data.html_url) {
-                setIframeSrc(data.html_url);
-              }
-            }
-          }
-        } catch (error) {
-          console.warn("Failed to get Open Access URL:", error);
-        }
-      }
-    })();
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-  };
-
-  const getDoiUrl = (doi) => {
-    if (!doi) return "";
-    try {
-      new URL(doi);
-      return doi;
-    } catch {
-      return `https://doi.org/${doi}`;
-    }
-  };
-
-  const doiUrl = getDoiUrl(record.doi);
-  const primaryLinkUrl = record.url ? record.url : doiUrl;
 
   return (
     <React.Fragment>
@@ -248,17 +195,6 @@ const RecordCardContent = ({
           </Typography>
           <Divider />
           <Stack direction="row" spacing={1}>
-            {(record.doi || record.url) && (
-              <Tooltip title="View full text">
-                <StyledIconButton
-                  className="record-card-icon"
-                  onClick={handleOpenDialog}
-                >
-                  <VisibilityIcon />
-                </StyledIconButton>
-              </Tooltip>
-            )}
-
             {record.url && (
               <Tooltip title="Open URL">
                 <StyledIconButton
@@ -345,126 +281,6 @@ const RecordCardContent = ({
           )}
         </Stack>
       </CardContent>
-      <Dialog
-        onClose={handleCloseDialog}
-        open={dialogOpen}
-        fullWidth
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            height: "95vh",
-            width: "95vw",
-            display: "flex",
-            flexDirection: "column",
-            bgcolor: "#fff",
-          },
-        }}
-      >
-        <Box sx={{ flexGrow: 1, display: "flex", overflow: "hidden" }}>
-          <Box
-            sx={{
-              flexGrow: 1,
-              height: "100%",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <Box
-              sx={{
-                p: 1,
-                borderBottom: 1,
-                borderColor: "divider",
-                bgcolor: "#fff",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <IconButton
-                  aria-label="close"
-                  onClick={handleCloseDialog}
-                  size="small"
-                >
-                  <CloseIcon />
-                </IconButton>
-                <Box sx={{ flexGrow: 1 }}>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    value={primaryLinkUrl}
-                    InputProps={{
-                      readOnly: true,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {iframeLoading && (
-                            <CircularProgress size={16} thickness={5} />
-                          )}
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "20px",
-                        color: "black",
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "black",
-                        },
-                      },
-                    }}
-                  />
-                </Box>
-                <Tooltip title="Open link in a new tab">
-                  <IconButton
-                    aria-label="open in new tab"
-                    onClick={() =>
-                      window.open(
-                        primaryLinkUrl,
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
-                    size="small"
-                  >
-                    <OpenInNewIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                position: "relative",
-                flexGrow: 1,
-                overflow: "hidden",
-                bgcolor: "#fff",
-              }}
-            >
-              <iframe
-                onLoad={() => setIframeLoading(false)}
-                onError={() => setIframeLoading(false)}
-                src={iframeSrc || primaryLinkUrl}
-                title={record.title}
-                width="100%"
-                height="100%"
-                style={{
-                  border: 0,
-                  visibility: iframeLoading ? "hidden" : "visible",
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box
-            sx={(theme) => ({
-              width: 400,
-              height: "100%",
-              overflowY: "auto",
-              bgcolor: theme.palette.background.paper,
-            })}
-          >
-            <RecordCardLabeler {...labelerProps} compact />
-          </Box>
-        </Box>
-      </Dialog>
     </React.Fragment>
   );
 };
