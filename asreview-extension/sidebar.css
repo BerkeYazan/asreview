@@ -707,7 +707,9 @@
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
-  transition: transform 0.1s ease, opacity 0.1s ease !important;
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease !important;
   opacity: 0.95 !important;
 }
 

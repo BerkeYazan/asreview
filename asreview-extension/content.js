@@ -50,11 +50,11 @@ class ASReviewSidebar {
 
     // Listen for text selection on normal pages
     this.addEventListenerTracked(document.body, "mouseup", (e) =>
-      this.handleTextSelection(e)
+      this.handleTextSelection(e),
     );
     // Listen for clicks to dismiss the icon/menu
     this.addEventListenerTracked(document.body, "mousedown", (e) =>
-      this.handleMouseDown(e)
+      this.handleMouseDown(e),
     );
   }
 
@@ -86,7 +86,7 @@ class ASReviewSidebar {
       listener.element.removeEventListener(
         listener.event,
         listener.handler,
-        listener.options
+        listener.options,
       );
       this.eventListeners.delete(key);
     }
@@ -102,7 +102,7 @@ class ASReviewSidebar {
         listener.element.removeEventListener(
           listener.event,
           listener.handler,
-          listener.options
+          listener.options,
         );
       } catch (e) {
         console.warn("Error removing event listener:", e);
@@ -201,7 +201,7 @@ class ASReviewSidebar {
         existingIcon.remove();
       }
       const existingMenu = document.getElementById(
-        "asreview-justification-menu"
+        "asreview-justification-menu",
       );
       if (existingMenu) {
         existingMenu.remove();
@@ -295,7 +295,7 @@ class ASReviewSidebar {
     } else {
       // Injected into the sidebar for the context menu flow
       const sidebarContent = document.querySelector(
-        "#asreview-sidebar .asreview-content"
+        "#asreview-sidebar .asreview-content",
       );
       if (sidebarContent) {
         menu.classList.add("in-sidebar");
@@ -330,7 +330,7 @@ class ASReviewSidebar {
               combinedRect.left = Math.min(combinedRect.left, markRect.left);
               combinedRect.bottom = Math.max(
                 combinedRect.bottom,
-                markRect.bottom
+                markRect.bottom,
               );
               combinedRect.right = Math.max(combinedRect.right, markRect.right);
             }
@@ -400,7 +400,7 @@ class ASReviewSidebar {
     window.dispatchEvent(
       new CustomEvent("asreview_extension_ready", {
         detail: { extensionId: extensionId },
-      })
+      }),
     );
   }
 
@@ -446,7 +446,7 @@ class ASReviewSidebar {
   createLauncher() {
     // Remove ALL existing launchers (more robust cleanup)
     const existingLaunchers = document.querySelectorAll(
-      "#asreview-launcher, [id^='asreview-launcher']"
+      "#asreview-launcher, [id^='asreview-launcher']",
     );
     existingLaunchers.forEach((launcher) => launcher.remove());
 
@@ -530,11 +530,11 @@ class ASReviewSidebar {
 
       // Check if justifications have changed, forcing a re-render if so
       const existingJustifications = sidebar.querySelectorAll(
-        ".justification-item"
+        ".justification-item",
       ).length;
       const newJustificationsCount = Object.values(this.justifications).reduce(
         (acc, val) => acc + val.length,
-        0
+        0,
       );
       if (existingJustifications !== newJustificationsCount) {
         return false;
@@ -558,7 +558,7 @@ class ASReviewSidebar {
         this.recordData.tagsForm.forEach((group, groupIndex) => {
           group.values.forEach((value, valueIndex) => {
             const checkbox = sidebar.querySelector(
-              `input[data-group="${group.id}"][data-value="${value.id}"]`
+              `input[data-group="${group.id}"][data-value="${value.id}"]`,
             );
             if (checkbox) {
               const shouldBeChecked =
@@ -587,8 +587,8 @@ class ASReviewSidebar {
       this._preservedScrollTop !== undefined
         ? this._preservedScrollTop
         : mainContent
-        ? mainContent.scrollTop
-        : 0;
+          ? mainContent.scrollTop
+          : 0;
 
     if (existingSidebar) {
       existingSidebar.remove();
@@ -613,7 +613,7 @@ class ASReviewSidebar {
     // Restore scroll position immediately after DOM creation
     requestAnimationFrame(() => {
       const newMainContent = document.querySelector(
-        "#asreview-sidebar .main-content"
+        "#asreview-sidebar .main-content",
       );
       if (newMainContent && scrollTop > 0) {
         newMainContent.scrollTop = scrollTop;
@@ -795,7 +795,7 @@ class ASReviewSidebar {
   forceFixCheckboxes() {
     // Additional defensive measure: force fix any hidden checkboxes
     const checkboxes = document.querySelectorAll(
-      '#asreview-sidebar input[type="checkbox"]'
+      '#asreview-sidebar input[type="checkbox"]',
     );
     checkboxes.forEach((checkbox) => {
       // Apply critical styles directly to the element as a last resort
@@ -813,7 +813,7 @@ class ASReviewSidebar {
         checkbox.style.setProperty(
           "-webkit-appearance",
           "checkbox",
-          "important"
+          "important",
         );
         checkbox.style.setProperty("-moz-appearance", "checkbox", "important");
       }
@@ -826,7 +826,7 @@ class ASReviewSidebar {
         checkbox.style.setProperty(
           "-webkit-appearance",
           "checkbox",
-          "important"
+          "important",
         );
         checkbox.style.setProperty("-moz-appearance", "checkbox", "important");
       }
@@ -835,7 +835,7 @@ class ASReviewSidebar {
 
   attachEventListeners() {
     const checkboxes = document.querySelectorAll(
-      '#asreview-sidebar input[type="checkbox"], #asreview-sidebar .asreview-checkbox-input'
+      '#asreview-sidebar input[type="checkbox"], #asreview-sidebar .asreview-checkbox-input',
     );
 
     checkboxes.forEach((checkbox) => {
@@ -843,7 +843,7 @@ class ASReviewSidebar {
         // Immediately remove focus to prevent blue highlight
         e.target.blur();
         const mainContent = document.querySelector(
-          "#asreview-sidebar .main-content"
+          "#asreview-sidebar .main-content",
         );
         const scrollTop = mainContent ? mainContent.scrollTop : 0;
 
@@ -869,7 +869,7 @@ class ASReviewSidebar {
     }
 
     const removeJustificationBtns = document.querySelectorAll(
-      ".remove-justification-btn"
+      ".remove-justification-btn",
     );
     removeJustificationBtns.forEach((btn) => {
       this.addEventListenerTracked(btn, "click", (e) => {
@@ -894,20 +894,20 @@ class ASReviewSidebar {
 
   updateUI() {
     const mainContent = document.querySelector(
-      "#asreview-sidebar .main-content"
+      "#asreview-sidebar .main-content",
     );
     const scrollTop =
       this._preservedScrollTop !== undefined
         ? this._preservedScrollTop
         : mainContent
-        ? mainContent.scrollTop
-        : 0;
+          ? mainContent.scrollTop
+          : 0;
 
     if (this.recordData.tagsForm) {
       this.recordData.tagsForm.forEach((group, groupIndex) => {
         group.values.forEach((value, valueIndex) => {
           const checkbox = document.querySelector(
-            `#asreview-sidebar input[data-group="${group.id}"][data-value="${value.id}"]`
+            `#asreview-sidebar input[data-group="${group.id}"][data-value="${value.id}"]`,
           );
           if (checkbox) {
             checkbox.checked =
@@ -942,7 +942,7 @@ class ASReviewSidebar {
     try {
       if (!chrome.runtime?.id) {
         console.warn(
-          "ASReview Extension Content: Extension context invalidated, please reload page"
+          "ASReview Extension Content: Extension context invalidated, please reload page",
         );
         return;
       }
@@ -979,7 +979,7 @@ class ASReviewSidebar {
       this.recordData.tagsForm.forEach((group, groupIndex) => {
         group.values.forEach((value, valueIndex) => {
           const checkbox = document.querySelector(
-            `#asreview-sidebar input[data-group="${group.id}"][data-value="${value.id}"]`
+            `#asreview-sidebar input[data-group="${group.id}"][data-value="${value.id}"]`,
           );
           if (checkbox && tagValuesCopy[groupIndex]?.values[valueIndex]) {
             tagValuesCopy[groupIndex].values[valueIndex].checked =
@@ -996,7 +996,7 @@ class ASReviewSidebar {
     try {
       if (!chrome.runtime?.id) {
         console.warn(
-          "ASReview Extension Content: Extension context invalidated, please reload page"
+          "ASReview Extension Content: Extension context invalidated, please reload page",
         );
         return;
       }
@@ -1012,7 +1012,7 @@ class ASReviewSidebar {
     } catch (error) {
       if (error.message.includes("Extension context invalidated")) {
         console.warn(
-          "ASReview Extension Content: Extension context invalidated, please reload page"
+          "ASReview Extension Content: Extension context invalidated, please reload page",
         );
       } else {
         console.error("ASReview Extension Content: Save failed", error);

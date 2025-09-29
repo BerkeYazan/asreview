@@ -6,11 +6,11 @@ class ASReviewExtensionBackground {
 
   init() {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
-      this.handleMessage(request, sender, sendResponse)
+      this.handleMessage(request, sender, sendResponse),
     );
     chrome.runtime.onMessageExternal.addListener(
       (request, sender, sendResponse) =>
-        this.handleMessage(request, sender, sendResponse)
+        this.handleMessage(request, sender, sendResponse),
     );
 
     if (chrome.action && chrome.action.setBadgeText) {
@@ -56,7 +56,7 @@ class ASReviewExtensionBackground {
           } catch (error) {
             console.error(
               "ASReview Extension Background: Failed to save tags",
-              error
+              error,
             );
             sendResponse({ success: false, error: error.message });
           }
@@ -121,7 +121,7 @@ class ASReviewExtensionBackground {
           method: "PUT",
           body: tagsFormData,
           credentials: "include",
-        }
+        },
       );
 
       if (!tagsResponse.ok) {
@@ -140,13 +140,13 @@ class ASReviewExtensionBackground {
           method: "PUT",
           body: noteFormData,
           credentials: "include",
-        }
+        },
       );
 
       if (!noteResponse.ok) {
         const responseText = await noteResponse.text();
         throw new Error(
-          `Note save failed: HTTP ${noteResponse.status}: ${noteResponse.statusText}`
+          `Note save failed: HTTP ${noteResponse.status}: ${noteResponse.statusText}`,
         );
       }
 
@@ -186,7 +186,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         type: "ADD_JUSTIFICATION_FROM_CONTEXT",
         selectedText: info.selectionText,
       },
-      { frameId: 0 }
+      { frameId: 0 },
     );
   }
 });
