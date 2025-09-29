@@ -18,6 +18,14 @@ class ASReviewExtensionBackground {
     }
   }
 
+  setupContextMenus() {
+    chrome.contextMenus.create({
+      id: "add-asreview-justification",
+      title: "Add to ASReview",
+      contexts: ["selection"],
+    });
+  }
+
   async handleMessage(request, sender, sendResponse) {
     switch (request.type) {
       case "RECORD_DATA":
@@ -162,4 +170,23 @@ class ASReviewExtensionBackground {
   }
 }
 
-new ASReviewExtensionBackground();
+const background = new ASReviewExtensionBackground();
+
+chrome.runtime.onInstalled.addListener(() => {
+  background.setupContextMenus();
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "add-asreview-justification" && tab.id) {
+    // Always send the message to the top-level frame (frameId: 0) of the tab.
+    // This is the only frame that can reliably control the sidebar UI.
+    chrome.tabs.sendMessage(
+      tab.id,
+      {
+        type: "ADD_JUSTIFICATION_FROM_CONTEXT",
+        selectedText: info.selectionText,
+      },
+      { frameId: 0 }
+    );
+  }
+});

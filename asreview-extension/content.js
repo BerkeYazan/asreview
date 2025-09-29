@@ -5,6 +5,10 @@ class ASReviewSidebar {
     this.eventListeners = new Map();
     this.cleanupTasks = [];
     this.isDestroyed = false;
+    this.justifications = {}; // To store justifications locally
+    this.selectedText = ""; // To hold the currently selected text
+    this.lastContextMenuClick = { x: 0, y: 0 };
+    this.isIconClicked = false; // Flag to prevent race condition
     this.init();
 
     window.addEventListener("beforeunload", () => this.destroy());
@@ -39,6 +43,19 @@ class ASReviewSidebar {
     this.createLauncher();
 
     this.renderUI();
+
+    this.addEventListenerTracked(document, "contextmenu", (e) => {
+      this.lastContextMenuClick = { x: e.pageX, y: e.pageY };
+    });
+
+    // Listen for text selection on normal pages
+    this.addEventListenerTracked(document.body, "mouseup", (e) =>
+      this.handleTextSelection(e)
+    );
+    // Listen for clicks to dismiss the icon/menu
+    this.addEventListenerTracked(document.body, "mousedown", (e) =>
+      this.handleMouseDown(e)
+    );
   }
 
   addEventListenerTracked(element, event, handler, options = {}) {
@@ -108,6 +125,276 @@ class ASReviewSidebar {
     if (launcher) launcher.remove();
   }
 
+  escapeHTML(str) {
+    const p = document.createElement("p");
+    p.appendChild(document.createTextNode(str));
+    return p.innerHTML;
+  }
+
+  handleMouseDown(e) {
+    // If the click is on our icon, let the icon's own handler do the work.
+    if (e.target.closest("#asreview-selection-icon")) {
+      return;
+    }
+
+    // If a menu exists and the click is outside it, remove the menu.
+    const menu = document.getElementById("asreview-justification-menu");
+    if (menu && !menu.contains(e.target)) {
+      menu.remove();
+    }
+
+    // If an icon exists and the click is outside it, remove the icon.
+    // (This cleans up the icon if the user selects text, then clicks elsewhere).
+    const icon = document.getElementById("asreview-selection-icon");
+    if (icon) {
+      icon.remove();
+    }
+  }
+
+  handleTextSelection(e) {
+    // If the click was on our icon, do nothing. The flag is reset, and we exit.
+    if (this.isIconClicked) {
+      this.isIconClicked = false;
+      return;
+    }
+
+    // Don't do anything if the selection is inside our UI elements
+    if (
+      e.target.closest("#asreview-sidebar") ||
+      e.target.closest("#asreview-launcher") ||
+      e.target.closest("#asreview-selection-icon") ||
+      e.target.closest("#asreview-justification-menu")
+    ) {
+      return;
+    }
+
+    // A brief delay to allow click events to fire before selection is processed
+    setTimeout(() => {
+      let selectedText = "";
+      let rect = null;
+
+      // Try standard selection first
+      const selection = window.getSelection();
+      selectedText = selection.toString().trim();
+
+      if (selectedText.length > 5) {
+        try {
+          const range = selection.getRangeAt(0);
+          rect = range.getBoundingClientRect();
+        } catch (e) {
+          rect = null;
+        }
+      } else {
+        // If standard selection fails, try PDF selection
+        const pdfSelection = this.getPDFSelection();
+        if (pdfSelection.text.length > 5) {
+          selectedText = pdfSelection.text;
+          rect = pdfSelection.rect;
+        } else {
+          selectedText = ""; // Ensure it's cleared if no valid selection
+        }
+      }
+
+      // Clean up previous icon and menu if they exist
+      const existingIcon = document.getElementById("asreview-selection-icon");
+      if (existingIcon) {
+        existingIcon.remove();
+      }
+      const existingMenu = document.getElementById(
+        "asreview-justification-menu"
+      );
+      if (existingMenu) {
+        existingMenu.remove();
+      }
+
+      if (selectedText.length > 5 && rect) {
+        // Only show for reasonably long selections
+        this.selectedText = selectedText;
+        this.createSelectionIcon(rect);
+      }
+    }, 10);
+  }
+
+  createSelectionIcon(rect) {
+    const icon = document.createElement("button");
+    icon.id = "asreview-selection-icon";
+    icon.title = "Add as justification";
+    const iconImg = document.createElement("img");
+    iconImg.src = chrome.runtime.getURL("icon.png");
+    icon.appendChild(iconImg);
+
+    document.body.appendChild(icon);
+
+    // Position the icon above the selection
+    const iconRect = icon.getBoundingClientRect();
+    const top = window.scrollY + rect.top - iconRect.height - 5;
+    const left =
+      window.scrollX + rect.left + rect.width / 2 - iconRect.width / 2;
+    icon.style.top = `${Math.max(0, top)}px`;
+    icon.style.left = `${Math.max(0, left)}px`;
+
+    this.addEventListenerTracked(icon, "mousedown", (e) => {
+      e.stopPropagation(); // CRUCIAL: Prevent this click from bubbling up to the body
+      this.isIconClicked = true; // Set the flag to prevent the body's mouseup from firing
+      const clickPosition = { x: e.pageX, y: e.pageY };
+      this.showJustificationMenu(clickPosition);
+      // Defer removal to prevent the body's mousedown listener from
+      // immediately closing the menu.
+      setTimeout(() => icon.remove(), 0);
+    });
+
+    // Prevent the mouseup event from bubbling to the body and re-triggering
+    // the text selection handler, which would close the menu.
+    this.addEventListenerTracked(icon, "mouseup", (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  showJustificationMenu(position) {
+    // Clean up previous menu if it exists
+    const existingMenu = document.getElementById("asreview-justification-menu");
+    if (existingMenu) {
+      existingMenu.remove();
+    }
+
+    const menu = document.createElement("div");
+    menu.id = "asreview-justification-menu";
+
+    if (
+      !this.recordData ||
+      !this.recordData.tagsForm ||
+      this.recordData.tagsForm.length === 0
+    ) {
+      menu.innerHTML = `<div class="asreview-justification-menu-item no-data">No active record found in ASReview LAB. Start a review to add justifications.</div>`;
+    } else {
+      this.recordData.tagsForm.forEach((group) => {
+        const menuItem = document.createElement("button");
+        menuItem.className = "asreview-justification-menu-item";
+        menuItem.textContent = group.label;
+        menuItem.dataset.groupId = group.id;
+
+        this.addEventListenerTracked(menuItem, "click", (e) => {
+          e.stopPropagation();
+          const groupId = e.target.dataset.groupId;
+          this.addJustification(groupId, this.selectedText);
+          menu.remove();
+        });
+
+        menu.appendChild(menuItem);
+      });
+    }
+
+    if (position) {
+      // Positioned from the floating icon click
+      document.body.appendChild(menu);
+      const menuRect = menu.getBoundingClientRect();
+      const top = position.y + 10;
+      const left = position.x - menuRect.width / 2;
+      menu.style.top = `${Math.max(0, top)}px`;
+      menu.style.left = `${Math.max(0, left)}px`;
+    } else {
+      // Injected into the sidebar for the context menu flow
+      const sidebarContent = document.querySelector(
+        "#asreview-sidebar .asreview-content"
+      );
+      if (sidebarContent) {
+        menu.classList.add("in-sidebar");
+        sidebarContent.prepend(menu);
+      }
+    }
+  }
+
+  getPDFSelection() {
+    let text = "";
+    let rect = null;
+    try {
+      const embed = document.querySelector('embed[type="application/pdf"]');
+      if (embed && embed.shadowRoot) {
+        const marks = embed.shadowRoot.querySelectorAll("mark");
+        if (marks.length > 0) {
+          const textFragments = [];
+          let combinedRect = null;
+          marks.forEach((mark) => {
+            textFragments.push(mark.textContent);
+            const markRect = mark.getBoundingClientRect();
+
+            if (!combinedRect) {
+              combinedRect = {
+                top: markRect.top,
+                left: markRect.left,
+                bottom: markRect.bottom,
+                right: markRect.right,
+              };
+            } else {
+              combinedRect.top = Math.min(combinedRect.top, markRect.top);
+              combinedRect.left = Math.min(combinedRect.left, markRect.left);
+              combinedRect.bottom = Math.max(
+                combinedRect.bottom,
+                markRect.bottom
+              );
+              combinedRect.right = Math.max(combinedRect.right, markRect.right);
+            }
+          });
+          text = textFragments.join(""); // Note: This simple join might miss spaces between words
+          if (combinedRect) {
+            rect = {
+              top: combinedRect.top,
+              left: combinedRect.left,
+              width: combinedRect.right - combinedRect.left,
+              height: combinedRect.bottom - combinedRect.top,
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("ASReview Extension: Error accessing PDF shadow DOM", error);
+    }
+    return { text: text.trim(), rect: rect };
+  }
+
+  addJustification(groupId, text) {
+    if (!this.justifications[groupId]) {
+      this.justifications[groupId] = [];
+    }
+    // Avoid adding duplicate justifications
+    if (!this.justifications[groupId].includes(text)) {
+      this.justifications[groupId].push(text);
+    }
+    this.selectedText = "";
+
+    this.renderUI(); // Re-render to show the new justification
+  }
+
+  removeJustification(groupId, index) {
+    if (this.justifications[groupId]?.[index]) {
+      this.justifications[groupId].splice(index, 1);
+      if (this.justifications[groupId].length === 0) {
+        delete this.justifications[groupId];
+      }
+      this.renderUI();
+    }
+  }
+
+  toggleJustificationDisplay(itemElement) {
+    const isTruncated = itemElement.dataset.isTruncated === "true";
+    if (!isTruncated) return; // Don't do anything if it wasn't truncated in the first place
+
+    const textElement = itemElement.querySelector(".justification-text");
+    const isExpanded = itemElement.classList.contains("expanded");
+
+    if (isExpanded) {
+      // Collapse it
+      textElement.innerHTML = `"${itemElement.dataset.truncatedText}"`;
+      itemElement.classList.remove("expanded");
+      itemElement.title = "Click to expand";
+    } else {
+      // Expand it
+      textElement.innerHTML = `"${itemElement.dataset.fullText}"`;
+      itemElement.classList.add("expanded");
+      itemElement.title = "Click to collapse";
+    }
+  }
+
   announceToWebapp() {
     const extensionId = chrome.runtime.id;
     window.dispatchEvent(
@@ -130,6 +417,28 @@ class ASReviewSidebar {
           this.recordData.note = request.data.note;
           this.updateUI();
         }
+        break;
+      case "SHOW_JUSTIFICATION_MENU":
+        this.selectedText = request.selectedText;
+        // For context menu, we don't have precise coordinates, so center it.
+        this.showJustificationMenu(null);
+        break;
+      case "ADD_JUSTIFICATION_FROM_CONTEXT":
+        this.selectedText = request.selectedText;
+
+        // If background script couldn't get text (common in PDFs), try getting it here
+        if (!this.selectedText) {
+          const pdfSelection = this.getPDFSelection();
+          if (pdfSelection.text) {
+            this.selectedText = pdfSelection.text;
+          }
+        }
+
+        if (!this.isOpen) {
+          this.toggleSidebar();
+        }
+        // Use null position to indicate it should be placed in the sidebar
+        this.showJustificationMenu(null);
         break;
     }
   }
@@ -216,6 +525,18 @@ class ASReviewSidebar {
         : 0;
 
       if (existingTagGroups !== newTagGroupsCount) {
+        return false;
+      }
+
+      // Check if justifications have changed, forcing a re-render if so
+      const existingJustifications = sidebar.querySelectorAll(
+        ".justification-item"
+      ).length;
+      const newJustificationsCount = Object.values(this.justifications).reduce(
+        (acc, val) => acc + val.length,
+        0
+      );
+      if (existingJustifications !== newJustificationsCount) {
         return false;
       }
 
@@ -395,6 +716,32 @@ class ASReviewSidebar {
 
         tagsHTML += `
             </div>
+            <div class="justifications-container" id="justifications-for-${group.id}">`;
+
+        if (this.justifications[group.id]) {
+          this.justifications[group.id].forEach((justification, index) => {
+            const fullText = this.escapeHTML(justification);
+            const isTruncated = justification.length > 100;
+            const truncatedText = isTruncated
+              ? this.escapeHTML(justification.substring(0, 100) + "...")
+              : fullText;
+
+            tagsHTML += `
+                <div class="justification-item" 
+                     data-full-text="${fullText}" 
+                     data-truncated-text="${truncatedText}"
+                     data-is-truncated="${isTruncated}"
+                     title="${isTruncated ? "Click to expand" : ""}">
+                  <span class="justification-text">"${truncatedText}"</span>
+                  <button class="remove-justification-btn" title="Remove justification" data-group-id="${
+                    group.id
+                  }" data-index="${index}">×</button>
+                </div>
+              `;
+          });
+        }
+
+        tagsHTML += `</div>
           </div>`;
       });
 
@@ -520,6 +867,29 @@ class ASReviewSidebar {
         this.saveNote();
       });
     }
+
+    const removeJustificationBtns = document.querySelectorAll(
+      ".remove-justification-btn"
+    );
+    removeJustificationBtns.forEach((btn) => {
+      this.addEventListenerTracked(btn, "click", (e) => {
+        e.stopPropagation();
+        const groupId = e.target.dataset.groupId;
+        const index = parseInt(e.target.dataset.index, 10);
+        this.removeJustification(groupId, index);
+      });
+    });
+
+    const justificationItems = document.querySelectorAll(".justification-item");
+    justificationItems.forEach((item) => {
+      this.addEventListenerTracked(item, "click", (e) => {
+        // Don't toggle if the remove button was clicked
+        if (e.target.classList.contains("remove-justification-btn")) {
+          return;
+        }
+        this.toggleJustificationDisplay(e.currentTarget);
+      });
+    });
   }
 
   updateUI() {

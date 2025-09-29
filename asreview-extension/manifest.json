@@ -8,7 +8,13 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "permissions": ["storage", "activeTab", "cookies", "scripting"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "cookies",
+    "scripting",
+    "contextMenus"
+  ],
   "host_permissions": [
     "http://localhost:3000/*",
     "http://localhost:5000/*",
